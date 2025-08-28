@@ -1,9 +1,10 @@
 #include <iostream>
 #include <unistd.h>
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <vector>
 
 int main(int argc, char* argv[]) {
 	//Create TCP socket using IPv4. 
@@ -41,7 +42,6 @@ int main(int argc, char* argv[]) {
 		std::cerr << "Error listening for connections." << std::endl;
 		return 1;	
 	}
-	std::cout << "here";
 	struct sockaddr_in client;
 	socklen_t clientLength = sizeof(client);
 	int clientFD = accept(serverFD, (struct sockaddr*) &client, &clientLength); 
@@ -53,10 +53,23 @@ int main(int argc, char* argv[]) {
 
 	std::cout << "Client connected\n";
 
-	char buffer[1024];
-	recv(clientFD, buffer, sizeof(buffer), 0);
-	std::cout << "Message received: " << buffer << std::endl;
-	//close(clientFD);
+	int expectedMessageLength = 0;
+	int totalReadBytes = 0;
+	recv(clientFD, &expectedMessageLength, sizeof(expectedMessageLength), 0);
+	expectedMessageLength = ntohl(expectedMessageLength);
+	std::cout << expectedMessageLength << std::endl;
+	std::vector<char> buffer(expectedMessageLength);
+	while (totalReadBytes < expectedMessageLength) {
+		int currentReadBytes = recv(clientFD, buffer.data() + totalReadBytes, expectedMessageLength - totalReadBytes, 0);
+		if (currentReadBytes <= 0) {
+			std::cerr << "Issue reading client data" << std::endl;
+			return 1;
+		}
+		totalReadBytes += currentReadBytes;
+	}
+	std::string convertedMessage (buffer.begin(), buffer.end());
+	std::cout << "Message received: " << convertedMessage << std::endl;
+	close(clientFD);	
 	close(serverFD);
 	return 0;
 }

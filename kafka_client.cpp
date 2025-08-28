@@ -1,13 +1,12 @@
-#include <iostream>
 #include <unistd.h>
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <iostream>
+#include <string>
 
 int main(int argc, char* argv[]) {
-
 	if (argc < 3) {
 		std::cerr << "Usage ./client <IPv4 addresse> <port #>" << std::endl;
 		return 1;
@@ -32,8 +31,8 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
-	int serverFD = connect(clientFD, (sockaddr*) &server, sizeof(server);
-	if (serverFD == -1) {
+	int connectionResult = connect(clientFD, (sockaddr*) &server, sizeof(server));
+	if (connectionResult == -1) {
 		close(clientFD);
 		std::cerr << "Error connecting client with server." << std::endl;
 		return 1;
@@ -41,8 +40,10 @@ int main(int argc, char* argv[]) {
 
 	std::cout << "Successfully connected with server.\n";
 
-	char* msg = "Hello world\n";
-	send(clientFD, msg, sizeof(msg), 0);
+	std::string msg = "Hello world";
+	int messageLength = htonl(msg.size());
+	send(clientFD, &messageLength, sizeof(messageLength), 0);
+	send(clientFD, msg.data(), msg.size(), 0);
 
 	close(clientFD);
 	return 0;
