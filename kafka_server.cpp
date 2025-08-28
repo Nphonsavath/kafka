@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-int main() {
+int main(int argc, char* argv[]) {
 	//Create TCP socket using IPv4. 
 	int serverFD = socket(AF_INET, SOCK_STREAM, 0);
 	if (serverFD  == -1) {
@@ -41,7 +41,7 @@ int main() {
 		std::cerr << "Error listening for connections." << std::endl;
 		return 1;	
 	}
-
+	std::cout << "here";
 	struct sockaddr_in client;
 	socklen_t clientLength = sizeof(client);
 	int clientFD = accept(serverFD, (struct sockaddr*) &client, &clientLength); 
@@ -52,7 +52,11 @@ int main() {
 	}
 
 	std::cout << "Client connected\n";
-	close(clientFD);
+
+	char buffer[1024];
+	recv(clientFD, buffer, sizeof(buffer), 0);
+	std::cout << "Message received: " << buffer << std::endl;
+	//close(clientFD);
 	close(serverFD);
 	return 0;
 }
