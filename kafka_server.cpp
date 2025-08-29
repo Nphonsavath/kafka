@@ -5,6 +5,8 @@
 #include <arpa/inet.h>
 
 #include <vector>
+#include <cstdint>
+#include <cstring>
 
 int main(int argc, char* argv[]) {
 	//Create TCP socket using IPv4. 
@@ -57,18 +59,27 @@ int main(int argc, char* argv[]) {
 	int totalReadBytes = 0;
 	recv(clientFD, &expectedMessageLength, sizeof(expectedMessageLength), 0);
 	expectedMessageLength = ntohl(expectedMessageLength);
+	//recv(clientFD, &totalReadBytes, sizeof(totalReadBytes), 0);
+	//std::cout << ntohl(totalReadBytes) << std::endl;
 	std::cout << expectedMessageLength << std::endl;
 	std::vector<char> buffer(expectedMessageLength);
 	while (totalReadBytes < expectedMessageLength) {
 		int currentReadBytes = recv(clientFD, buffer.data() + totalReadBytes, expectedMessageLength - totalReadBytes, 0);
-		if (currentReadBytes <= 0) {
-			std::cerr << "Issue reading client data" << std::endl;
+		std::cout << "Currentreadbytes: " << currentReadBytes << std::endl;
+		std::cout << "Totalreadbytes: " << totalReadBytes << std::endl;
+		if (currentReadBytes == -1) {
+			std::cout << "Error reading data" << std::endl;
 			return 1;
+		} else if (currentReadBytes == 0) {
+			std::cout << "Completed reading data" << std::endl;
+			break;
 		}
 		totalReadBytes += currentReadBytes;
 	}
-	std::string convertedMessage (buffer.begin(), buffer.end());
-	std::cout << "Message received: " << convertedMessage << std::endl;
+	int32_t correlationId;
+	memcpy(&correlationId, buffer.data(), sizeof(correlationId));
+	correlationId = ntohl(correlationId);
+	std::cout << "Message received: " << correlationId << std::endl;
 	close(clientFD);	
 	close(serverFD);
 	return 0;

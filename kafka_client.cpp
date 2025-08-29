@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <string>
+#include <cstdint>
 
 int main(int argc, char* argv[]) {
 	if (argc < 3) {
@@ -39,11 +40,10 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::cout << "Successfully connected with server.\n";
-
-	std::string msg = "Hello world";
-	int messageLength = htonl(msg.size());
-	send(clientFD, &messageLength, sizeof(messageLength), 0);
-	send(clientFD, msg.data(), msg.size(), 0);
+	int32_t messageSize = htonl(8);
+	int32_t correlationId = htonl(7);
+	send(clientFD, &messageSize, sizeof(messageSize), 0);
+	send(clientFD, &correlationId, sizeof(correlationId), 0);
 
 	close(clientFD);
 	return 0;
