@@ -8,15 +8,7 @@
 #include <cstdint>
 #include <cstring>
 
-constexpr int16_t ERROR_NONE = 0;
-constexpr int16_t UNSUPPORTED_VERSION = 35;
-
-struct v2KafkaHeader {
-	int32_t messageSize;
-	int16_t requestAPIKey;
-	int16_t requestAPIVersion;
-	int32_t correlationId;
-};
+#include "kafka_protocol.h"
 
 struct APIVersionsResponse {
 	int32_t messageSize;
@@ -24,7 +16,7 @@ struct APIVersionsResponse {
 	int16_t errorCode;
 };
 
-void convertKafkaHeaderNTOH(v2KafkaHeader& header) {
+void convertKafkaHeaderNTOH(v2KafkaRequestHeader& header) {
 	header.messageSize = ntohl(header.messageSize);
 	header.requestAPIKey = ntohs(header.requestAPIKey);
 	header.requestAPIVersion = ntohs(header.requestAPIVersion);
@@ -100,7 +92,7 @@ int main(int argc, char* argv[]) {
 		totalReadBytes += currentReadBytes;
 	}
 	
-	v2KafkaHeader header;
+	v2KafkaRequestHeader header;
 	memcpy(&header, buffer.data(), sizeof(header));
 	convertKafkaHeaderNTOH(header);	
 	std::cout << "CorrelationId received: " << header.correlationId << std::endl;

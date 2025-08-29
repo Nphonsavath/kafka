@@ -9,12 +9,7 @@
 #include <vector>
 #include <cstring>
 
-struct v2KafkaHeader {
-	int32_t messageSize;
-	int16_t requestAPIKey;
-	int16_t requestAPIVersion;
-	int32_t correlationId;
-};
+#include "kafka_protocol.h"
 
 struct APIVersionsResponse {
 	int32_t messageSize;
@@ -55,11 +50,11 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::cout << "Successfully connected with server.\n";
-	v2KafkaHeader header;
+	v2KafkaRequestHeader header;
 	header.messageSize = htonl(sizeof(header));
 	std::cout << "Header message size: " << ntohl(header.messageSize) << std::endl;
 	header.requestAPIKey = htons(18);
-	header.requestAPIVersion = htons(0);
+	header.requestAPIVersion = htons(4);
 	header.correlationId = htonl(1333056139);
 
 	send(clientFD, &header.messageSize, sizeof(header.messageSize), 0);
