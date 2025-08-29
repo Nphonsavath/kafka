@@ -8,6 +8,13 @@
 #include <cstdint>
 #include <cstring>
 
+struct v1KafkaHeader {
+	int32_t messageSize;
+	int16_t requestAPIKey;
+	int16_t requestAPIVersion;
+	int32_t correlationId;
+};
+
 int main(int argc, char* argv[]) {
 	//Create TCP socket using IPv4. 
 	int serverFD = socket(AF_INET, SOCK_STREAM, 0);
@@ -76,10 +83,13 @@ int main(int argc, char* argv[]) {
 		}
 		totalReadBytes += currentReadBytes;
 	}
-	int32_t correlationId;
-	memcpy(&correlationId, buffer.data(), sizeof(correlationId));
-	correlationId = ntohl(correlationId);
-	std::cout << "Message received: " << correlationId << std::endl;
+	//int32_t correlationId;
+	//memcpy(&correlationId, buffer.data(), sizeof(correlationId));
+	//correlationId = ntohl(correlationId);
+	v1KafkaHeader header;
+	memcpy(&header, buffer.data(), sizeof(header));
+	std::cout << "CorrelationId received: " << ntohl(header.correlationId) << std::endl;
+	std::cout << "RequestAPIVersion received: " << ntohs(header.requestAPIVersion) << std::endl;
 	close(clientFD);	
 	close(serverFD);
 	return 0;

@@ -7,6 +7,13 @@
 #include <string>
 #include <cstdint>
 
+struct v1KafkaHeader {
+	int32_t messageSize;
+	int16_t requestAPIKey;
+	int16_t requestAPIVersion;
+	int32_t correlationId;
+};
+
 int main(int argc, char* argv[]) {
 	if (argc < 3) {
 		std::cerr << "Usage ./client <IPv4 addresse> <port #>" << std::endl;
@@ -40,11 +47,15 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::cout << "Successfully connected with server.\n";
-	int32_t messageSize = htonl(8);
-	int32_t correlationId = htonl(7);
-	send(clientFD, &messageSize, sizeof(messageSize), 0);
-	send(clientFD, &correlationId, sizeof(correlationId), 0);
+	v1KafkaHeader header;
+	header.messageSize = htonl(sizeof(header));
+	header.requestAPIKey = htons(18);
+	header.requestAPIVersion = htons(26442);
+	header.correlationId = htonl(7);
 
+	send(clientFD, &header.messageSize, sizeof(header.messageSize), 0);
+	send(clientFD, &header, sizeof(header), 0);
+	std::cout <<sizeof(header) << std::endl;
 	close(clientFD);
 	return 0;
 
