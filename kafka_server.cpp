@@ -8,13 +8,29 @@
 #include <cstdint>
 #include <cstring>
 
-struct v1KafkaHeader {
+constexpr int16_t ERROR_NONE = 0;
+constexpr int16_t UNSUPPORTED_VERSION = 35;
+
+struct v2KafkaHeader {
 	int32_t messageSize;
 	int16_t requestAPIKey;
 	int16_t requestAPIVersion;
 	int32_t correlationId;
 };
 
+struct APIVersionsResponse {
+	int32_t messageSize;
+	int32_t correlationId;
+	int16_t errorCode;
+};
+
+void convertKafkaHeaderNTOH(v2KafkaHeader& header) {
+	header.messageSize = ntohl(header.messageSize);
+	header.requestAPIKey = ntohs(header.requestAPIKey);
+	header.requestAPIVersion = ntohs(header.requestAPIVersion);
+	header.correlationId = ntohl(header.correlationId);
+	return;
+}
 int main(int argc, char* argv[]) {
 	//Create TCP socket using IPv4. 
 	int serverFD = socket(AF_INET, SOCK_STREAM, 0);
@@ -83,13 +99,24 @@ int main(int argc, char* argv[]) {
 		}
 		totalReadBytes += currentReadBytes;
 	}
-	//int32_t correlationId;
-	//memcpy(&correlationId, buffer.data(), sizeof(correlationId));
-	//correlationId = ntohl(correlationId);
-	v1KafkaHeader header;
+	
+	v2KafkaHeader header;
 	memcpy(&header, buffer.data(), sizeof(header));
-	std::cout << "CorrelationId received: " << ntohl(header.correlationId) << std::endl;
-	std::cout << "RequestAPIVersion received: " << ntohs(header.requestAPIVersion) << std::endl;
+	convertKafkaHeaderNTOH(header);	
+	std::cout << "CorrelationId received: " << header.correlationId << std::endl;
+	std::cout << "RequestAPIVersion received: " << header.requestAPIVersion << std::endl;
+	
+	APIVersionsResponse response;
+	response.messageSize = htonl(sizeof(response));
+	response.correlationId = htonl(header.correlationId);
+	if (header.requestAPIVersion < 0 || header.requestAPIVersion > 4) {
+		response.errorCode = htons(UNSUPPORTED_VERSION); 
+	} else {
+		response.errorCode = htons(0);
+	}
+	send(clientFD, &response.messageSize, sizeof(response.messageSize), 0);
+	send(clientFD, &response, sizeof(response), 0);
+
 	close(clientFD);	
 	close(serverFD);
 	return 0;
