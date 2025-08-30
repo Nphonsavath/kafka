@@ -12,7 +12,7 @@ public:
 	std::int32_t getClientId() {}
 
 private:
-	int32_t messageSize;
+	int32_t requestMessageSize;
 	struct kafkaRequestHeaderV2 {
 		int16_t requestAPIKey;
 		int16_t requestAPIVersion;
@@ -20,7 +20,7 @@ private:
 		std::string clientIdNullable;
 		int8_t tagBuffer = 0;
 	};
-	kafkaRequestHeaderV2 header;
+	kafkaRequestHeaderV2 requestHeader;
 };
 
 #endif
