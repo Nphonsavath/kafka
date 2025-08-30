@@ -47,24 +47,50 @@ int main(int argc, char* argv[]) {
 	std::cout << "Successfully connected with server.\n";
 	
 	std::vector<char> header;
-
-	int16_t requestAPIKey = 18;
-	header.insert(header.end(), reinterpret_cast<char*>(&requestAPIKey), reinterpret_cast<char*)(&requestAPIKey) + sizeof(requestAPIKey);
-
-	int16_t requestAPIVersion = 35;
-	header.insert(header.end(), reinterpret_cast<char*>(&requestAPIVersion), reinterpret_cast<char*)(&requestAPIVersion) + sizeof(requestAPIVersion);
-
-	int32_t correlationId = 1333056139;
-	header.insert(header.end(), reinterpret_cast<char*>(&correlationId), reinterpret_cast<char*)(&correlationId) + sizeof(correlationId);
-
-	std::string clientIdNullable = "09kafka-cli";
-	header.insert(header.end(), reinterpret_cast<char*>(&clientIdNullable), reinterpret_cast<char*)(&clientIdNullable) + sizeof(clientIdNUllable);
 	
+	int32_t messageSize = htonl(0);
+	header.insert(header.end(), 
+			reinterpret_cast<char*>(&messageSize), 
+			reinterpret_cast<char*>(&messageSize) + sizeof(messageSize));
+
+	int16_t requestAPIKey = htons(18);
+	header.insert(header.end(), 
+			reinterpret_cast<char*>(&requestAPIKey), 
+			reinterpret_cast<char*>(&requestAPIKey) + sizeof(requestAPIKey));
+
+	int16_t requestAPIVersion = htons(4);
+	header.insert(header.end(), 
+			reinterpret_cast<char*>(&requestAPIVersion), 
+			reinterpret_cast<char*>(&requestAPIVersion) + sizeof(requestAPIVersion));
+
+	int32_t correlationId = htonl(7);
+	header.insert(header.end(), 
+			reinterpret_cast<char*>(&correlationId), 
+			reinterpret_cast<char*>(&correlationId) + sizeof(correlationId));
+
+	std::string clientId = "09kafka-cli";
+    	int16_t clientIdLength = htons(static_cast<int16_t>(clientId.size()));
+    	header.insert(header.end(), 
+			reinterpret_cast<char*>(&clientIdLength), 
+			reinterpret_cast<char*>(&clientIdLength) + sizeof(clientIdLength));
+    	header.insert(header.end(),
+			clientId.data(),
+			clientId.data() + clientId.size());
+				  
+	//std::string clientIdNullable = "09kafka-cli";
+	//header.insert(header.end(), reinterpret_cast<char*>(&clientIdNullable), reinterpret_cast<char*>(&clientIdNullable) + sizeof(clientIdNullable));
+
+	int32_t totalMessageSize = htonl(header.size());
+	memcpy(header.data(), &totalMessageSize, sizeof(totalMessageSize));	
+	std::cout << "totalMessageSize: " << totalMessageSize << std::endl;
 	Request request(header);
 
-	send(clientFD, &request.getRequestMessageSize(), sizeof(&request.getRequestMessageSize()), 0);
-	std::cout << "getRequestMessageSize() = " << request.getRequestMessageSize() << std::endl;
-	send(clientFD, &request, sizeof(request), 0);
+	//std::cout << sizeof(request) << std::endl;	
+	//int messageSize = htonl(sizeof(request));
+	//std::cout << "MessageSize: " << messageSize << std::endl;
+	send(clientFD, &totalMessageSize, sizeof(totalMessageSize), 0);
+	std::cout << sizeof(request) << std::endl;
+	send(clientFD, header.data(), header.size(), 0);
 
 	/*	
 	int expectedMessageLength = 0;

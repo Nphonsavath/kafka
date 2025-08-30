@@ -4,6 +4,8 @@
 #include <cstring>
 #include <vector>
 #include <stdexcept>
+#include <utility>
+#include <iostream>
 
 namespace
 {
@@ -18,7 +20,7 @@ namespace
 	}
 }
 
-Request::request(std::vector<char> bytes) {
+Request::Request(std::vector<char> bytes) {
 
 	//TODO: Error check bytes < expected size of header
 	// if (bytes.size() < ...) {
@@ -29,6 +31,7 @@ Request::request(std::vector<char> bytes) {
 	int offset = 0;
 
 	requestMessageSize = convertToBigEndian<int32_t>(data + offset);
+	std::cout << "REQUEST MESSAGE SIZE: " << requestMessageSize << std::endl;
 	offset += sizeof(requestMessageSize);
 	
 	requestHeader.requestAPIKey = convertToBigEndian<int16_t>(data + offset);
@@ -40,7 +43,7 @@ Request::request(std::vector<char> bytes) {
 	requestHeader.correlationId = convertToBigEndian<int32_t>(data + offset);
 	offset += sizeof(requestHeader.correlationId);
 	
-	int16_t clientIdLength = convertToBigEndian<int16_t>(data + offset);
+	/*int16_t clientIdLength = convertToBigEndian<int16_t>(data + offset);
 	if (clientIdLength > 0) {
 		if (offset + clientIdLength > bytes.size()) {
 			std::runtime_error("Error clientIdLength greater than bytes remaining");
@@ -54,7 +57,5 @@ Request::request(std::vector<char> bytes) {
 	if (offset < bytes.size()) {
 		requestHeader.tagBuffer = static_cast<int8_t>(data[offset]);
 		offset += 1;
-	}
-
-
+	}*/
 }

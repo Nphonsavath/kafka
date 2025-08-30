@@ -86,9 +86,13 @@ int main(int argc, char* argv[]) {
 		}
 		totalReadBytes += currentReadBytes;
 	}
-	for (int i = 0; i < expectedMessageLength; i++) {
-		std::cout << buffer[i]; 
+	for (auto i : buffer) {	
+		std::cout << std::hex << std::uppercase << (static_cast<int>(static_cast<unsigned char>(i)) & 0xFF) << " ";
 	}
+
+	Request request(buffer);
+	std::cout << request.getRequestAPIKey() << std::endl;
+	std::cout << request.getrequestAPIVersion() << std::endl;
 	//kafkaRequestHeaderV2 header;
 	//memcpy(&header, buffer.data(), sizeof(header));
 	//convertKafkaHeaderNTOH(header);	

@@ -8,11 +8,11 @@ class Request {
 public:
 	explicit Request(std::vector<char> bytes);
 	int32_t getRequestMessageSize() { return requestMessageSize; }
-	int16_t getRequestAPIKey() { return header.requestAPIKey; }
-	int16_t getrequestAPIVersion() { return header.requestAPIVersion; }
-	int32_t getCorrelationId() { return header.correlationId; }
-	std::string getClientId() { return header.clientIdNullable; }
-	int8_t getTagBuffer() { return header.tagBuffer; }
+	int16_t getRequestAPIKey() { return requestHeader.requestAPIKey; }
+	int16_t getrequestAPIVersion() { return requestHeader.requestAPIVersion; }
+	int32_t getCorrelationId() { return requestHeader.correlationId; }
+	std::string getClientId() { return requestHeader.clientIdNullable; }
+	int8_t getTagBuffer() { return requestHeader.tagBuffer; }
 
 private:
 	int32_t requestMessageSize;
