@@ -9,6 +9,7 @@
 #include <cstring>
 
 #include "kafka_protocol.hpp"
+#include "request.hpp"
 
 void convertKafkaHeaderNTOH(kafkaRequestHeaderV2& header) {
 	header.messageSize = ntohl(header.messageSize);
@@ -85,13 +86,15 @@ int main(int argc, char* argv[]) {
 		}
 		totalReadBytes += currentReadBytes;
 	}
-	
-	kafkaRequestHeaderV2 header;
-	memcpy(&header, buffer.data(), sizeof(header));
-	convertKafkaHeaderNTOH(header);	
-	std::cout << "CorrelationId received: " << header.correlationId << std::endl;
-	std::cout << "RequestAPIVersion received: " << header.requestAPIVersion << std::endl;
-	
+	for (int i = 0; i < expectedMessageLength; i++) {
+		std::cout << buffer[i]; 
+	}
+	//kafkaRequestHeaderV2 header;
+	//memcpy(&header, buffer.data(), sizeof(header));
+	//convertKafkaHeaderNTOH(header);	
+	//std::cout << "CorrelationId received: " << header.correlationId << std::endl;
+	//std::cout << "RequestAPIVersion received: " << header.requestAPIVersion << std::endl;
+	/*
 	APIVersionsResponseBodyV4 response;
 	response.messageSize = htonl(sizeof(response));
 	response.correlationId = htonl(header.correlationId);
@@ -105,6 +108,7 @@ int main(int argc, char* argv[]) {
 	send(clientFD, &messageSize, sizeof(messageSize), 0);
 	send(clientFD, &response, sizeof(response), 0);
 
+	*/
 	close(clientFD);	
 	close(serverFD);
 	return 0;

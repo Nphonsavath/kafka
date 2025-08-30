@@ -2,14 +2,17 @@
 #define REQUEST_HPP
 
 #include <vector>
+#include <string>
 
 class Request {
 public:
 	explicit Request(std::vector<char> bytes);
-	std::int16_t getRequestAPIKey() { return header.requestAPIKey; }
-	std::int16_t getrequestAPIVersion() { return header.requestAPIVersion; }
-	std::int32_t getCorrelationId() { return header.correlationId; }
-	std::int32_t getClientId() {}
+	int32_t getRequestMessageSize() { return requestMessageSize; }
+	int16_t getRequestAPIKey() { return header.requestAPIKey; }
+	int16_t getrequestAPIVersion() { return header.requestAPIVersion; }
+	int32_t getCorrelationId() { return header.correlationId; }
+	std::string getClientId() { return header.clientIdNullable; }
+	int8_t getTagBuffer() { return header.tagBuffer; }
 
 private:
 	int32_t requestMessageSize;
