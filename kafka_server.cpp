@@ -8,15 +8,9 @@
 #include <cstdint>
 #include <cstring>
 
-#include "kafka_protocol.h"
+#include "kafka_protocol.hpp"
 
-struct APIVersionsResponse {
-	int32_t messageSize;
-	int32_t correlationId;
-	int16_t errorCode;
-};
-
-void convertKafkaHeaderNTOH(v2KafkaRequestHeader& header) {
+void convertKafkaHeaderNTOH(kafkaRequestHeaderV2& header) {
 	header.messageSize = ntohl(header.messageSize);
 	header.requestAPIKey = ntohs(header.requestAPIKey);
 	header.requestAPIVersion = ntohs(header.requestAPIVersion);
@@ -92,13 +86,13 @@ int main(int argc, char* argv[]) {
 		totalReadBytes += currentReadBytes;
 	}
 	
-	v2KafkaRequestHeader header;
+	kafkaRequestHeaderV2 header;
 	memcpy(&header, buffer.data(), sizeof(header));
 	convertKafkaHeaderNTOH(header);	
 	std::cout << "CorrelationId received: " << header.correlationId << std::endl;
 	std::cout << "RequestAPIVersion received: " << header.requestAPIVersion << std::endl;
 	
-	APIVersionsResponse response;
+	APIVersionsResponseBodyV4 response;
 	response.messageSize = htonl(sizeof(response));
 	response.correlationId = htonl(header.correlationId);
 	if (header.requestAPIVersion < 0 || header.requestAPIVersion > 4) {
@@ -106,7 +100,9 @@ int main(int argc, char* argv[]) {
 	} else {
 		response.errorCode = htons(0);
 	}
-	send(clientFD, &response.messageSize, sizeof(response.messageSize), 0);
+
+	int messageSize = sizeof(response);	
+	send(clientFD, &messageSize, sizeof(messageSize), 0);
 	send(clientFD, &response, sizeof(response), 0);
 
 	close(clientFD);	

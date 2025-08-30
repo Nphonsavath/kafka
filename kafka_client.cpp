@@ -9,13 +9,7 @@
 #include <vector>
 #include <cstring>
 
-#include "kafka_protocol.h"
-
-struct APIVersionsResponse {
-	int32_t messageSize;
-	int32_t correlationId;
-	int16_t errorCode;
-};
+#include "kafka_protocol.hpp"
 
 int main(int argc, char* argv[]) {
 	if (argc < 3) {
@@ -50,11 +44,11 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::cout << "Successfully connected with server.\n";
-	v2KafkaRequestHeader header;
+	kafkaRequestHeaderV2 header;
 	header.messageSize = htonl(sizeof(header));
 	std::cout << "Header message size: " << ntohl(header.messageSize) << std::endl;
 	header.requestAPIKey = htons(18);
-	header.requestAPIVersion = htons(4);
+	header.requestAPIVersion = htons(35);
 	header.correlationId = htonl(1333056139);
 
 	send(clientFD, &header.messageSize, sizeof(header.messageSize), 0);
@@ -64,8 +58,7 @@ int main(int argc, char* argv[]) {
 	int totalReadBytes = 0;
 	recv(clientFD, &expectedMessageLength, sizeof(expectedMessageLength), 0);
 	expectedMessageLength = ntohl(expectedMessageLength);
-	//recv(clientFD, &totalReadBytes, sizeof(totalReadBytes), 0);
-	//std::cout << ntohl(totalReadBytes) << std::endl;
+	
 	std::cout << "Expected message length: " << expectedMessageLength << std::endl;
 	std::vector<char> buffer(expectedMessageLength);
 	while (totalReadBytes < expectedMessageLength) {
@@ -82,7 +75,7 @@ int main(int argc, char* argv[]) {
 		totalReadBytes += currentReadBytes;
 	}
 
-	APIVersionsResponse response;
+	APIVersionsResponseBodyV4 response;
 	memcpy(&response, buffer.data(), sizeof(response));
 	std::cout << "Response message size: " << ntohl(response.messageSize) << std::endl;
 	std::cout << "Response correlation Id: " << ntohl(response.correlationId) << std::endl;
