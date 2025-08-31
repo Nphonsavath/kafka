@@ -48,10 +48,11 @@ int main(int argc, char* argv[]) {
 	
 	std::vector<char> header;
 	
-	int32_t messageSize = htonl(0);
+	/*int32_t messageSize = htonl(0);
 	header.insert(header.end(), 
 			reinterpret_cast<char*>(&messageSize), 
 			reinterpret_cast<char*>(&messageSize) + sizeof(messageSize));
+	*/
 
 	int16_t requestAPIKey = htons(18);
 	header.insert(header.end(), 
@@ -68,21 +69,22 @@ int main(int argc, char* argv[]) {
 			reinterpret_cast<char*>(&correlationId), 
 			reinterpret_cast<char*>(&correlationId) + sizeof(correlationId));
 
-	std::string clientId = "09kafka-cli";
+	std::string clientId = "kafka-cli";
     	int16_t clientIdLength = htons(static_cast<int16_t>(clientId.size()));
     	header.insert(header.end(), 
 			reinterpret_cast<char*>(&clientIdLength), 
 			reinterpret_cast<char*>(&clientIdLength) + sizeof(clientIdLength));
     	header.insert(header.end(),
-			clientId.data(),
-			clientId.data() + clientId.size());
+			clientId.begin(),
+			clientId.end());
 				  
 	//std::string clientIdNullable = "09kafka-cli";
 	//header.insert(header.end(), reinterpret_cast<char*>(&clientIdNullable), reinterpret_cast<char*>(&clientIdNullable) + sizeof(clientIdNullable));
 
 	int32_t totalMessageSize = htonl(header.size());
-	memcpy(header.data(), &totalMessageSize, sizeof(totalMessageSize));	
-	std::cout << "totalMessageSize: " << totalMessageSize << std::endl;
+	std::cout << ntohl(totalMessageSize) << std::endl;
+	//memcpy(header.data(), &totalMessageSize, sizeof(totalMessageSize));	
+	//std::cout << "totalMessageSize: " << totalMessageSize << std::endl;
 	Request request(header);
 
 	//std::cout << sizeof(request) << std::endl;	

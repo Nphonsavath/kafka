@@ -30,10 +30,10 @@ Request::Request(std::vector<char> bytes) {
 	char* data = bytes.data();
 	int offset = 0;
 
-	requestMessageSize = convertToBigEndian<int32_t>(data + offset);
-	std::cout << "REQUEST MESSAGE SIZE: " << requestMessageSize << std::endl;
+	/*requestMessageSize = convertToBigEndian<int32_t>(data + offset);
 	offset += sizeof(requestMessageSize);
-	
+	*/
+
 	requestHeader.requestAPIKey = convertToBigEndian<int16_t>(data + offset);
 	offset += sizeof(requestHeader.requestAPIKey);
 	
@@ -43,19 +43,24 @@ Request::Request(std::vector<char> bytes) {
 	requestHeader.correlationId = convertToBigEndian<int32_t>(data + offset);
 	offset += sizeof(requestHeader.correlationId);
 	
-	/*int16_t clientIdLength = convertToBigEndian<int16_t>(data + offset);
+	int16_t clientIdLength = convertToBigEndian<int16_t>(data + offset);
+	offset += sizeof(clientIdLength);
 	if (clientIdLength > 0) {
 		if (offset + clientIdLength > bytes.size()) {
 			std::runtime_error("Error clientIdLength greater than bytes remaining");
 		}
 		requestHeader.clientIdNullable = std::string(data + offset, clientIdLength);
-		offset += sizeof(clientIdLength);
+		offset += clientIdLength;
+		//std::cout << "PLEASE" << clientIdLength << std::endl;
 	} else {
 		requestHeader.clientIdNullable = "";
 	}
 
 	if (offset < bytes.size()) {
+		std::cout << "OFFSET = " << offset << " bytes.size() = " << bytes.size() << std::endl;
 		requestHeader.tagBuffer = static_cast<int8_t>(data[offset]);
 		offset += 1;
-	}*/
+	} else {
+		requestHeader.tagBuffer = 0;
+	}
 }

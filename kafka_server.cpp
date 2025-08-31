@@ -69,8 +69,6 @@ int main(int argc, char* argv[]) {
 	int totalReadBytes = 0;
 	recv(clientFD, &expectedMessageLength, sizeof(expectedMessageLength), 0);
 	expectedMessageLength = ntohl(expectedMessageLength);
-	//recv(clientFD, &totalReadBytes, sizeof(totalReadBytes), 0);
-	//std::cout << ntohl(totalReadBytes) << std::endl;
 	std::cout << expectedMessageLength << std::endl;
 	std::vector<char> buffer(expectedMessageLength);
 	while (totalReadBytes < expectedMessageLength) {
@@ -86,13 +84,25 @@ int main(int argc, char* argv[]) {
 		}
 		totalReadBytes += currentReadBytes;
 	}
-	for (auto i : buffer) {	
-		std::cout << std::hex << std::uppercase << (static_cast<int>(static_cast<unsigned char>(i)) & 0xFF) << " ";
+	for (int i = 0; i < totalReadBytes; i++) {
+    		if (i != totalReadBytes - 1) {
+			std::cout << std::hex
+              << (static_cast<int>(static_cast<unsigned char>(buffer[i])) & 0xFF) << " ";
+		} else {
+			std::cout << std::hex
+              << (static_cast<int>(static_cast<unsigned char>(buffer[i])) & 0x0F) << " ";
+		}
 	}
 
+	//std::cout << std::endl;
+
 	Request request(buffer);
+	//std::cout << request.getRequestMessageSize() << std::endl;
 	std::cout << request.getRequestAPIKey() << std::endl;
 	std::cout << request.getrequestAPIVersion() << std::endl;
+	std::cout << request.getCorrelationId() << std::endl;
+	std::cout << request.getClientId() << std::endl;
+	std::cout << static_cast<int>(request.getTagBuffer()) << std::endl;
 	//kafkaRequestHeaderV2 header;
 	//memcpy(&header, buffer.data(), sizeof(header));
 	//convertKafkaHeaderNTOH(header);	
