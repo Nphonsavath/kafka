@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <utility>
 #include <iostream>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 namespace
 {
@@ -20,7 +22,34 @@ namespace
 	}
 }
 
-Request::Request(std::vector<char> bytes) {
+Request::Request(int clientFD) : requestMessageSize(0) {
+	int expectedMessageLength = 0;
+	int totalReadBytes = 0;
+	if (recv(clientFD, &expectedMessageLength, sizeof(expectedMessageLength), 0) == -1) {
+		throw std::runtime_error("Error reading from client fd");
+	}
+	expectedMessageLength = ntohl(expectedMessageLength);
+
+	std::vector<char> buffer(expectedMessageLength);
+	while (totalReadBytes < expectedMessageLength) {
+		int currentReadBytes = recv(clientFD, 
+				buffer.data() + totalReadBytes, 
+				expectedMessageLength - totalReadBytes,
+			       	0);
+		std::cout << "Current read bytes: " << currentReadBytes << std::endl;
+		std::cout << "Total read bytes: " << totalReadBytes << std::endl;
+		if (currentReadBytes == -1) {
+			throw std::runtime_error("Error reading from socket");
+		} else if (currentReadBytes == 0) {
+			std::cout << "Completed readding from socket" << std::endl;
+			break;
+		}
+		totalReadBytes += currentReadBytes;
+	}
+	*this = Request(std::move(buffer));
+}
+
+Request::Request(std::vector<char> bytes) : requestMessageSize(bytes.size()) {
 
 	//TODO: Error check bytes < expected size of header
 	// if (bytes.size() < ...) {
@@ -63,4 +92,8 @@ Request::Request(std::vector<char> bytes) {
 	} else {
 		requestHeader.tagBuffer = 0;
 	}
+}
+
+Request::toString() {
+	
 }

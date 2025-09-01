@@ -7,12 +7,14 @@
 class Request {
 public:
 	explicit Request(std::vector<char> bytes);
+	explicit Request(int clientFD);
 	int32_t getRequestMessageSize() { return requestMessageSize; }
 	int16_t getRequestAPIKey() { return requestHeader.requestAPIKey; }
 	int16_t getrequestAPIVersion() { return requestHeader.requestAPIVersion; }
 	int32_t getCorrelationId() { return requestHeader.correlationId; }
 	std::string getClientId() { return requestHeader.clientIdNullable; }
 	int8_t getTagBuffer() { return requestHeader.tagBuffer; }
+	void toString();
 
 private:
 	int32_t requestMessageSize;

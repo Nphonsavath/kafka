@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 
 	std::cout << "Client connected\n";
 
-	int expectedMessageLength = 0;
+	/*int expectedMessageLength = 0;
 	int totalReadBytes = 0;
 	recv(clientFD, &expectedMessageLength, sizeof(expectedMessageLength), 0);
 	expectedMessageLength = ntohl(expectedMessageLength);
@@ -83,8 +83,10 @@ int main(int argc, char* argv[]) {
 			break;
 		}
 		totalReadBytes += currentReadBytes;
-	}
-	for (int i = 0; i < totalReadBytes; i++) {
+	}*/
+	Request request(clientFD);
+
+	/*for (int i = 0; i < totalReadBytes; i++) {
     		if (i != totalReadBytes - 1) {
 			std::cout << std::hex
               << (static_cast<int>(static_cast<unsigned char>(buffer[i])) & 0xFF) << " ";
@@ -92,12 +94,12 @@ int main(int argc, char* argv[]) {
 			std::cout << std::hex
               << (static_cast<int>(static_cast<unsigned char>(buffer[i])) & 0x0F) << " ";
 		}
-	}
+	}*/
 
 	//std::cout << std::endl;
 
-	Request request(buffer);
-	//std::cout << request.getRequestMessageSize() << std::endl;
+	//Request request(buffer);
+	std::cout << request.getRequestMessageSize() << std::endl;
 	std::cout << request.getRequestAPIKey() << std::endl;
 	std::cout << request.getrequestAPIVersion() << std::endl;
 	std::cout << request.getCorrelationId() << std::endl;
