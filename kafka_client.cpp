@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
 			reinterpret_cast<char*>(&requestAPIKey), 
 			reinterpret_cast<char*>(&requestAPIKey) + sizeof(requestAPIKey));
 
-	int16_t requestAPIVersion = htons(4);
+	int16_t requestAPIVersion = htons(5);
 	header.insert(header.end(), 
 			reinterpret_cast<char*>(&requestAPIVersion), 
 			reinterpret_cast<char*>(&requestAPIVersion) + sizeof(requestAPIVersion));

@@ -88,6 +88,16 @@ int main(int argc, char* argv[]) {
 			reinterpret_cast<char*>(&correlationId), 
 			reinterpret_cast<char*>(&correlationId) + sizeof(correlationId));
 
+	int16_t errorCode;	
+	if (request.getRequestAPIVersion() < 0 || request.getRequestAPIVersion() > 4) {
+		errorCode = htons(UNSUPPORTED_VERSION);
+	} else {
+		errorCode = htons(ERROR_NONE);
+	}
+	header.insert(header.end(),
+			reinterpret_cast<char*>(&errorCode),
+			reinterpret_cast<char*>(&errorCode) + sizeof(errorCode));
+
 	int32_t totalMessageSize = htonl(header.size());
 	std::cout << ntohl(totalMessageSize) << std::endl;
 	send(clientFD, &totalMessageSize, sizeof(totalMessageSize), 0);

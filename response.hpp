@@ -13,6 +13,7 @@ private:
 	int32_t responseMessageSize;
 	struct kafkaResponseHeaderV0 {
 		int32_t correlationId;
+		int16_t errorCode;
 	};
 	kafkaResponseHeaderV0 responseHeader;
 

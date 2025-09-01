@@ -24,8 +24,12 @@ Response::Response(std::vector<char> bytes) {
 
 	responseHeader.correlationId = convertToBigEndian<std::int32_t>(data + offset);
 	offset += sizeof(responseHeader.correlationId);
+
+	responseHeader.errorCode = convertToBigEndian<std::int16_t>(data + offset);
+	offset += sizeof(responseHeader.errorCode);
 }
 
 void Response::toString() {
 	std::cout << "Response Correlation Id: " << responseHeader.correlationId << '\n';
+	std::cout << "Response Error Code: " << responseHeader.errorCode << '\n';
 }
