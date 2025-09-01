@@ -41,7 +41,7 @@ Request::Request(int clientFD) : requestMessageSize(0) {
 		if (currentReadBytes == -1) {
 			throw std::runtime_error("Error reading from socket");
 		} else if (currentReadBytes == 0) {
-			std::cout << "Completed readding from socket" << std::endl;
+			std::cout << "Completed reading from socket" << std::endl;
 			break;
 		}
 		totalReadBytes += currentReadBytes;
@@ -58,10 +58,6 @@ Request::Request(std::vector<char> bytes) : requestMessageSize(bytes.size()) {
 	
 	char* data = bytes.data();
 	int offset = 0;
-
-	/*requestMessageSize = convertToBigEndian<int32_t>(data + offset);
-	offset += sizeof(requestMessageSize);
-	*/
 
 	requestHeader.requestAPIKey = convertToBigEndian<int16_t>(data + offset);
 	offset += sizeof(requestHeader.requestAPIKey);
@@ -80,7 +76,6 @@ Request::Request(std::vector<char> bytes) : requestMessageSize(bytes.size()) {
 		}
 		requestHeader.clientIdNullable = std::string(data + offset, clientIdLength);
 		offset += clientIdLength;
-		//std::cout << "PLEASE" << clientIdLength << std::endl;
 	} else {
 		requestHeader.clientIdNullable = "";
 	}
@@ -101,5 +96,4 @@ void Request::toString() {
 	std::cout << "Request Correlation Id: " << requestHeader.correlationId << '\n';
 	std::cout << "Request Client Id: " << requestHeader.clientIdNullable << '\n';
 	std::cout << "Request Tag Buffer: " << static_cast<int>(requestHeader.tagBuffer) << '\n';
-
 }

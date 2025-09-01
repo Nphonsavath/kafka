@@ -10,6 +10,7 @@
 
 #include "kafka_protocol.hpp"
 #include "request.hpp"
+#include "response.hpp"
 
 void convertKafkaHeaderNTOH(kafkaRequestHeaderV2& header) {
 	header.messageSize = ntohl(header.messageSize);
@@ -65,27 +66,10 @@ int main(int argc, char* argv[]) {
 
 	std::cout << "Client connected\n";
 
-	/*int expectedMessageLength = 0;
-	int totalReadBytes = 0;
-	recv(clientFD, &expectedMessageLength, sizeof(expectedMessageLength), 0);
-	expectedMessageLength = ntohl(expectedMessageLength);
-	std::cout << expectedMessageLength << std::endl;
-	std::vector<char> buffer(expectedMessageLength);
-	while (totalReadBytes < expectedMessageLength) {
-		int currentReadBytes = recv(clientFD, buffer.data() + totalReadBytes, expectedMessageLength - totalReadBytes, 0);
-		std::cout << "Currentreadbytes: " << currentReadBytes << std::endl;
-		std::cout << "Totalreadbytes: " << totalReadBytes << std::endl;
-		if (currentReadBytes == -1) {
-			std::cout << "Error reading data" << std::endl;
-			return 1;
-		} else if (currentReadBytes == 0) {
-			std::cout << "Completed reading data" << std::endl;
-			break;
-		}
-		totalReadBytes += currentReadBytes;
-	}*/
 	Request request(clientFD);
 	request.toString();
+
+
 	/*for (int i = 0; i < totalReadBytes; i++) {
     		if (i != totalReadBytes - 1) {
 			std::cout << std::hex
@@ -98,14 +82,16 @@ int main(int argc, char* argv[]) {
 
 	//std::cout << std::endl;
 
-	//Request request(buffer);
-	/*std::cout << request.getRequestMessageSize() << std::endl;
-	std::cout << request.getRequestAPIKey() << std::endl;
-	std::cout << request.getrequestAPIVersion() << std::endl;
-	std::cout << request.getCorrelationId() << std::endl;
-	std::cout << request.getClientId() << std::endl;
-	std::cout << static_cast<int>(request.getTagBuffer()) << std::endl;
-	*/
+	std::vector<char> header;
+	int32_t correlationId = htonl(request.getCorrelationId());
+	header.insert(header.end(), 
+			reinterpret_cast<char*>(&correlationId), 
+			reinterpret_cast<char*>(&correlationId) + sizeof(correlationId));
+
+	int32_t totalMessageSize = htonl(header.size());
+	std::cout << ntohl(totalMessageSize) << std::endl;
+	send(clientFD, &totalMessageSize, sizeof(totalMessageSize), 0);
+	send(clientFD, header.data(), header.size(), 0);
 	//kafkaRequestHeaderV2 header;
 	//memcpy(&header, buffer.data(), sizeof(header));
 	//convertKafkaHeaderNTOH(header);	

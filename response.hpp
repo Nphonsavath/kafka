@@ -1,5 +1,8 @@
-#ifdef RESPONSE_HPP
+#ifndef RESPONSE_HPP
 #define RESPONSE_HPP
+
+#include <vector>
+#include <cstdint>
 
 class Response {
 public:

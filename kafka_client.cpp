@@ -11,10 +11,11 @@
 
 #include "kafka_protocol.hpp"
 #include "request.hpp"
+#include "response.hpp"
 
 int main(int argc, char* argv[]) {
 	if (argc < 3) {
-		std::cerr << "Usage ./client <IPv4 addresse> <port #>" << std::endl;
+		std::cerr << "Usage ./client <IPv4 address> <port #>" << std::endl;
 		return 1;
 	}
 
@@ -94,7 +95,7 @@ int main(int argc, char* argv[]) {
 	std::cout << sizeof(request) << std::endl;
 	send(clientFD, header.data(), header.size(), 0);
 
-	/*	
+	
 	int expectedMessageLength = 0;
 	int totalReadBytes = 0;
 	recv(clientFD, &expectedMessageLength, sizeof(expectedMessageLength), 0);
@@ -116,12 +117,9 @@ int main(int argc, char* argv[]) {
 		totalReadBytes += currentReadBytes;
 	}
 
-	APIVersionsResponseBodyV4 response;
-	memcpy(&response, buffer.data(), sizeof(response));
-	std::cout << "Response message size: " << ntohl(response.messageSize) << std::endl;
-	std::cout << "Response correlation Id: " << ntohl(response.correlationId) << std::endl;
-	std::cout << "Response error code: " << ntohs(response.errorCode) << std::endl;
-	*/
+	Response response(buffer);
+	response.toString();
+
 	close(clientFD);
 	return 0;
 
