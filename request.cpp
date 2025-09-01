@@ -94,6 +94,12 @@ Request::Request(std::vector<char> bytes) : requestMessageSize(bytes.size()) {
 	}
 }
 
-Request::toString() {
-	
+void Request::toString() {
+	std::cout << "Request Message Size: " << requestMessageSize << '\n';
+	std::cout << "Request API Key: " << requestHeader.requestAPIKey << '\n';
+	std::cout << "Request API Version: " << requestHeader.requestAPIVersion << '\n';
+	std::cout << "Request Correlation Id: " << requestHeader.correlationId << '\n';
+	std::cout << "Request Client Id: " << requestHeader.clientIdNullable << '\n';
+	std::cout << "Request Tag Buffer: " << static_cast<int>(requestHeader.tagBuffer) << '\n';
+
 }

@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
 		totalReadBytes += currentReadBytes;
 	}*/
 	Request request(clientFD);
-
+	request.toString();
 	/*for (int i = 0; i < totalReadBytes; i++) {
     		if (i != totalReadBytes - 1) {
 			std::cout << std::hex
@@ -99,12 +99,13 @@ int main(int argc, char* argv[]) {
 	//std::cout << std::endl;
 
 	//Request request(buffer);
-	std::cout << request.getRequestMessageSize() << std::endl;
+	/*std::cout << request.getRequestMessageSize() << std::endl;
 	std::cout << request.getRequestAPIKey() << std::endl;
 	std::cout << request.getrequestAPIVersion() << std::endl;
 	std::cout << request.getCorrelationId() << std::endl;
 	std::cout << request.getClientId() << std::endl;
 	std::cout << static_cast<int>(request.getTagBuffer()) << std::endl;
+	*/
 	//kafkaRequestHeaderV2 header;
 	//memcpy(&header, buffer.data(), sizeof(header));
 	//convertKafkaHeaderNTOH(header);	
