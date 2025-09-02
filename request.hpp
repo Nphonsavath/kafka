@@ -7,7 +7,7 @@
 class Request {
 public:
 	explicit Request(std::vector<char> bytes);
-	explicit Request(int clientFD);
+	static std::vector<char> readRequest(int clientFD);
 	int32_t getRequestMessageSize() { return requestMessageSize; }
 	int16_t getRequestAPIKey() { return requestHeader.requestAPIKey; }
 	int16_t getRequestAPIVersion() { return requestHeader.requestAPIVersion; }

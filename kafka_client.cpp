@@ -49,11 +49,11 @@ int main(int argc, char* argv[]) {
 	
 	std::vector<char> header;
 	
-	/*int32_t messageSize = htonl(0);
+	int32_t messageSize = htonl(0);
 	header.insert(header.end(), 
 			reinterpret_cast<char*>(&messageSize), 
 			reinterpret_cast<char*>(&messageSize) + sizeof(messageSize));
-	*/
+	
 
 	int16_t requestAPIKey = htons(18);
 	header.insert(header.end(), 
@@ -84,15 +84,14 @@ int main(int argc, char* argv[]) {
 
 	int32_t totalMessageSize = htonl(header.size());
 	std::cout << ntohl(totalMessageSize) << std::endl;
-	//memcpy(header.data(), &totalMessageSize, sizeof(totalMessageSize));	
+	memcpy(header.data(), &totalMessageSize, sizeof(totalMessageSize));	
 	//std::cout << "totalMessageSize: " << totalMessageSize << std::endl;
-	Request request(header);
+	//Request request(header);
 
 	//std::cout << sizeof(request) << std::endl;	
 	//int messageSize = htonl(sizeof(request));
 	//std::cout << "MessageSize: " << messageSize << std::endl;
-	send(clientFD, &totalMessageSize, sizeof(totalMessageSize), 0);
-	std::cout << sizeof(request) << std::endl;
+	//send(clientFD, &totalMessageSize, sizeof(totalMessageSize), 0);
 	send(clientFD, header.data(), header.size(), 0);
 
 	

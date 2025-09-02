@@ -22,18 +22,19 @@ namespace
 	}
 }
 
-Request::Request(int clientFD) : requestMessageSize(0) {
+std::vector<char> Request::readRequest(int clientFD) {
 	int expectedMessageLength = 0;
 	int totalReadBytes = 0;
 	if (recv(clientFD, &expectedMessageLength, sizeof(expectedMessageLength), 0) == -1) {
 		throw std::runtime_error("Error reading from client fd");
 	}
 	expectedMessageLength = ntohl(expectedMessageLength);
-
+	totalReadBytes += sizeof(expectedMessageLength);
+	
 	std::vector<char> buffer(expectedMessageLength);
 	while (totalReadBytes < expectedMessageLength) {
 		int currentReadBytes = recv(clientFD, 
-				buffer.data() + totalReadBytes, 
+				buffer.data() + totalReadBytes - sizeof(expectedMessageLength), 
 				expectedMessageLength - totalReadBytes,
 			       	0);
 		std::cout << "Current read bytes: " << currentReadBytes << std::endl;
@@ -46,10 +47,10 @@ Request::Request(int clientFD) : requestMessageSize(0) {
 		}
 		totalReadBytes += currentReadBytes;
 	}
-	*this = Request(std::move(buffer));
+	return buffer;
 }
 
-Request::Request(std::vector<char> bytes) : requestMessageSize(bytes.size()) {
+Request::Request(std::vector<char> bytes) : requestMessageSize(bytes.size() - sizeof(requestMessageSize)) {
 
 	//TODO: Error check bytes < expected size of header
 	// if (bytes.size() < ...) {
@@ -58,6 +59,9 @@ Request::Request(std::vector<char> bytes) : requestMessageSize(bytes.size()) {
 	
 	char* data = bytes.data();
 	int offset = 0;
+
+	//requestMessageSize = convertToBigEndian<int32_t>(data + offset);
+	//offset += sizeof(requestMessageSize);
 
 	requestHeader.requestAPIKey = convertToBigEndian<int16_t>(data + offset);
 	offset += sizeof(requestHeader.requestAPIKey);
@@ -80,7 +84,7 @@ Request::Request(std::vector<char> bytes) : requestMessageSize(bytes.size()) {
 		requestHeader.clientIdNullable = "";
 	}
 
-	if (offset < bytes.size()) {
+	if (offset < requestMessageSize) {
 		std::cout << "OFFSET = " << offset << " bytes.size() = " << bytes.size() << std::endl;
 		requestHeader.tagBuffer = static_cast<int8_t>(data[offset]);
 		offset += 1;

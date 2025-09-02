@@ -66,7 +66,8 @@ int main(int argc, char* argv[]) {
 
 	std::cout << "Client connected\n";
 
-	Request request(clientFD);
+	std::vector<char> requestBuffer = Request::readRequest(clientFD);
+	Request request(requestBuffer);
 	request.toString();
 
 
