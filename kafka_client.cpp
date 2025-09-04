@@ -70,17 +70,40 @@ int main(int argc, char* argv[]) {
 			reinterpret_cast<char*>(&correlationId), 
 			reinterpret_cast<char*>(&correlationId) + sizeof(correlationId));
 
-	std::string clientId = "kafka-cli";
-    	int16_t clientIdLength = htons(static_cast<int16_t>(clientId.size()));
+	std::string headerClientId = "kafka-cli";
+    	int16_t headerClientIdLength = htons(static_cast<int16_t>(headerClientId.size()));
     	header.insert(header.end(), 
-			reinterpret_cast<char*>(&clientIdLength), 
-			reinterpret_cast<char*>(&clientIdLength) + sizeof(clientIdLength));
+			reinterpret_cast<char*>(&headerClientIdLength), 
+			reinterpret_cast<char*>(&headerClientIdLength) + sizeof(headerClientIdLength));
     	header.insert(header.end(),
-			clientId.begin(),
-			clientId.end());
+			headerClientId.begin(),
+			headerClientId.end());
 				  
-	//std::string clientIdNullable = "09kafka-cli";
-	//header.insert(header.end(), reinterpret_cast<char*>(&clientIdNullable), reinterpret_cast<char*>(&clientIdNullable) + sizeof(clientIdNullable));
+	APIVersionRequestBodyV4 body {
+		"kafka-cli",
+		"0.1",
+		0
+	};
+
+	int8_t bodyClientIdLength = static_cast<int8_t>(body.clientIdCompact.size());
+	header.insert(header.end(),
+			reinterpret_cast<char*>(&bodyClientIdLength),
+			reinterpret_cast<char*>(&bodyClientIdLength) + sizeof(bodyClientIdLength));
+	header.insert(header.end(),
+			body.clientIdCompact.begin(),
+			body.clientIdCompact.end());
+
+	int8_t bodyClientIdSoftwareVerLength = static_cast<int8_t>(body.clientIdSoftwareVerCompact.size());
+	header.insert(header.end(),
+			reinterpret_cast<char*>(&bodyClientIdSoftwareVerLength),
+			reinterpret_cast<char*>(&bodyClientIdSoftwareVerLength) + sizeof(bodyClientIdSoftwareVerLength));
+	header.insert(header.end(),
+			body.clientIdSoftwareVerCompact.begin(),
+			body.clientIdSoftwareVerCompact.end());
+
+	header.insert(header.end(),
+			reinterpret_cast<char*>(&body.tagBuffer),
+			reinterpret_cast<char*>(&body.tagBuffer) + sizeof(body.tagBuffer));
 
 	int32_t totalMessageSize = htonl(header.size());
 	std::cout << ntohl(totalMessageSize) << std::endl;

@@ -12,13 +12,19 @@
 #include "request.hpp"
 #include "response.hpp"
 
-void convertKafkaHeaderNTOH(kafkaRequestHeaderV2& header) {
-	header.messageSize = ntohl(header.messageSize);
-	header.requestAPIKey = ntohs(header.requestAPIKey);
-	header.requestAPIVersion = ntohs(header.requestAPIVersion);
-	header.correlationId = ntohl(header.correlationId);
-	return;
+template <typename T>
+void appendValue(T value, std::vector<char>& buffer) {
+	if constexpr (sizeof(T) == 1) {
+		buffer.push_back(static_cast<char>(value));
+	} else {
+		if constexpr (sizeof(T) == 2) { value = htons(static_cast<T>(value)); }
+		if constexpr (sizeof(T) == 4) { value = htonl(static_cast<T>(value)); }
+		buffer.insert(buffer.end(),
+				reinterpret_cast<char*>(&value),
+				reinterpret_cast<char*>(&value) + sizeof(value));
+	}
 }
+
 int main(int argc, char* argv[]) {
 	//Create TCP socket using IPv4. 
 	int serverFD = socket(AF_INET, SOCK_STREAM, 0);
@@ -70,38 +76,46 @@ int main(int argc, char* argv[]) {
 	Request request(requestBuffer);
 	request.toString();
 
-
-	/*for (int i = 0; i < totalReadBytes; i++) {
-    		if (i != totalReadBytes - 1) {
-			std::cout << std::hex
-              << (static_cast<int>(static_cast<unsigned char>(buffer[i])) & 0xFF) << " ";
-		} else {
-			std::cout << std::hex
-              << (static_cast<int>(static_cast<unsigned char>(buffer[i])) & 0x0F) << " ";
-		}
-	}*/
-
-	//std::cout << std::endl;
+	std::vector<APIKeyVersion> supportedAPIs = {
+		{18, 0, 4, 0}
+	};
 
 	std::vector<char> header;
+	
+	int32_t messageSize = 0;
+	appendValue(messageSize, header);
+	//header.insert(header.end(), 
+	//		reinterpret_cast<char*>(&messageSize), 
+	//		reinterpret_cast<char*>(&messageSize) + sizeof(messageSize));
+
 	int32_t correlationId = htonl(request.getCorrelationId());
 	header.insert(header.end(), 
 			reinterpret_cast<char*>(&correlationId), 
 			reinterpret_cast<char*>(&correlationId) + sizeof(correlationId));
 
 	int16_t errorCode;	
-	if (request.getRequestAPIVersion() < 0 || request.getRequestAPIVersion() > 4) {
-		errorCode = htons(UNSUPPORTED_VERSION);
-	} else {
-		errorCode = htons(ERROR_NONE);
+	if (request.getRequestAPIKey() == 18) {
+		if (request.getRequestAPIVersion() >= 0 && request.getRequestAPIVersion() <= 4) {
+			errorCode = htons(ERROR_NONE);
+			header.insert(header.end(),
+				reinterpret_cast<char*>(&errorCode),
+				reinterpret_cast<char*>(&errorCode) + sizeof(errorCode));
+			//for (const APIKeyVersion& api : supportedAPIs) {
+			//	header.insert(header.end(),
+					
+			//}	
+		} else {
+			errorCode = htons(UNSUPPORTED_VERSION);
+			header.insert(header.end(),
+				reinterpret_cast<char*>(&errorCode),
+				reinterpret_cast<char*>(&errorCode) + sizeof(errorCode));
+		}
 	}
-	header.insert(header.end(),
-			reinterpret_cast<char*>(&errorCode),
-			reinterpret_cast<char*>(&errorCode) + sizeof(errorCode));
 
 	int32_t totalMessageSize = htonl(header.size());
 	std::cout << ntohl(totalMessageSize) << std::endl;
-	send(clientFD, &totalMessageSize, sizeof(totalMessageSize), 0);
+	memcpy(header.data(), &totalMessageSize, sizeof(totalMessageSize));	
+	//send(clientFD, &totalMessageSize, sizeof(totalMessageSize), 0);
 	send(clientFD, header.data(), header.size(), 0);
 	//kafkaRequestHeaderV2 header;
 	//memcpy(&header, buffer.data(), sizeof(header));
