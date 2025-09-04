@@ -84,31 +84,34 @@ int main(int argc, char* argv[]) {
 	
 	int32_t messageSize = 0;
 	appendValue(messageSize, header);
-	//header.insert(header.end(), 
-	//		reinterpret_cast<char*>(&messageSize), 
-	//		reinterpret_cast<char*>(&messageSize) + sizeof(messageSize));
 
-	int32_t correlationId = htonl(request.getCorrelationId());
-	header.insert(header.end(), 
-			reinterpret_cast<char*>(&correlationId), 
-			reinterpret_cast<char*>(&correlationId) + sizeof(correlationId));
+	int32_t correlationId = request.getCorrelationId();
+	appendValue(correlationId, header);
 
 	int16_t errorCode;	
 	if (request.getRequestAPIKey() == 18) {
 		if (request.getRequestAPIVersion() >= 0 && request.getRequestAPIVersion() <= 4) {
+			std::cout << "Inside" << std::endl;
 			errorCode = htons(ERROR_NONE);
-			header.insert(header.end(),
-				reinterpret_cast<char*>(&errorCode),
-				reinterpret_cast<char*>(&errorCode) + sizeof(errorCode));
-			//for (const APIKeyVersion& api : supportedAPIs) {
-			//	header.insert(header.end(),
-					
-			//}	
+			appendValue(errorCode, header);
+			
+			int8_t supportedAPIsLength = supportedAPIs.size() + 1;
+			appendValue(supportedAPIsLength, header);
+			for (const APIKeyVersion& api : supportedAPIs) {
+				appendValue(api.APIKey, header);
+				appendValue(api.minVersion, header);
+				appendValue(api.maxVersion, header);
+				appendValue(api.tagBuffer, header);	
+			}
+
+			int32_t throttleTime = 0;
+			appendValue(throttleTime, header);	
+
+			int8_t tagBuffer = 0;
+			header.push_back(static_cast<char>(tagBuffer));
 		} else {
 			errorCode = htons(UNSUPPORTED_VERSION);
-			header.insert(header.end(),
-				reinterpret_cast<char*>(&errorCode),
-				reinterpret_cast<char*>(&errorCode) + sizeof(errorCode));
+			appendValue(errorCode, header);
 		}
 	}
 
