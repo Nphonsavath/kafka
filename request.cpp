@@ -84,13 +84,14 @@ Request::Request(std::vector<char> bytes) : requestMessageSize(bytes.size() - si
 		requestHeader.clientIdNullable = "";
 	}
 
-	if (offset < requestMessageSize) {
+	/*if (offset < requestMessageSize) {
 		std::cout << "OFFSET = " << offset << " bytes.size() = " << bytes.size() << std::endl;
 		requestHeader.tagBuffer = static_cast<int8_t>(data[offset]);
 		offset += 1;
 	} else {
 		requestHeader.tagBuffer = 0;
-	}
+	}*/
+	requestHeader.tagBuffer = 0;
 }
 
 void Request::toString() {

@@ -98,9 +98,13 @@ int main(int argc, char* argv[]) {
 			appendValue(supportedAPIsLength, header);
 			for (const APIKeyVersion& api : supportedAPIs) {
 				appendValue(api.APIKey, header);
+				std::cout << "api.APIKey: " << api.APIKey << std::endl;
 				appendValue(api.minVersion, header);
+				std::cout << "api.minVersion: " << api.minVersion << std::endl;
 				appendValue(api.maxVersion, header);
+				std::cout << "api.maxVersion: " << api.maxVersion << std::endl;
 				appendValue(api.tagBuffer, header);	
+				std::cout << "api.tagBuffer: " << static_cast<int>(api.tagBuffer) << std::endl;
 			}
 
 			int32_t throttleTime = 0;

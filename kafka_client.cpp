@@ -118,8 +118,7 @@ int main(int argc, char* argv[]) {
 	//send(clientFD, &totalMessageSize, sizeof(totalMessageSize), 0);
 	send(clientFD, header.data(), header.size(), 0);
 	std::unordered_map<int32_t, int16_t> correlationToAPIKey;
-	correlationToAPIKey[correlationId] = requestAPIKey;
-
+	correlationToAPIKey[ntohl(correlationId)] = ntohs(requestAPIKey);
 	std::vector<char> responseBuffer = Response::readResponse(clientFD);
 	/*	
 	int expectedMessageLength = 0;
@@ -152,6 +151,7 @@ int main(int argc, char* argv[]) {
 	*/
 
 	Response response(responseBuffer);
+	std::cout << "Response correlation Id: " << response.getCorrelationId() << std::endl;
 	int16_t responseAPIKey = correlationToAPIKey[response.getCorrelationId()];
 	response.parseResponse(responseBuffer, responseAPIKey);	
 	//if (response.correlationId == 18) {
