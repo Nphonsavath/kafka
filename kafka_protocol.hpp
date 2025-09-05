@@ -20,8 +20,6 @@ struct APIKeyVersion {
 };
 
 struct APIVersionsResponseBodyV4 {
-	int32_t messageSize; //extra
-	int32_t correlationId;
 	int16_t errorCode;
 	std::vector<APIKeyVersion> APIKeys;
 	int32_t throttleTimeMs;

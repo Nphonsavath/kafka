@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <vector>
 #include <cstring>
+#include <unordered_map>
 
 #include "kafka_protocol.hpp"
 #include "request.hpp"
@@ -116,17 +117,27 @@ int main(int argc, char* argv[]) {
 	//std::cout << "MessageSize: " << messageSize << std::endl;
 	//send(clientFD, &totalMessageSize, sizeof(totalMessageSize), 0);
 	send(clientFD, header.data(), header.size(), 0);
+	std::unordered_map<int32_t, int16_t> correlationToAPIKey;
+	correlationToAPIKey[correlationId] = requestAPIKey;
 
-	
+	std::vector<char> responseBuffer = Response::readResponse(clientFD);
+	/*	
 	int expectedMessageLength = 0;
 	int totalReadBytes = 0;
-	recv(clientFD, &expectedMessageLength, sizeof(expectedMessageLength), 0);
+	if (recv(clientFD, &expectedMessageLength, sizeof(expectedMessageLength), 0) == -1) {
+		std::cerr << "Error reading from client fd" << std::endl;
+		return 1;	
+	}
 	expectedMessageLength = ntohl(expectedMessageLength);
-	
+	totalReadBytes += sizeof(expectedMessageLength);
+
 	std::cout << "Expected message length: " << expectedMessageLength << std::endl;
 	std::vector<char> buffer(expectedMessageLength);
 	while (totalReadBytes < expectedMessageLength) {
-		int currentReadBytes = recv(clientFD, buffer.data() + totalReadBytes, expectedMessageLength - totalReadBytes, 0);
+		int currentReadBytes = recv(clientFD, 
+				buffer.data() + totalReadBytes - sizeof(expectedMessageLength), 
+				expectedMessageLength - totalReadBytes, 
+				0);
 		std::cout << "Currentreadbytes: " << currentReadBytes << std::endl;
 		std::cout << "Totalreadbytes: " << totalReadBytes << std::endl;
 		if (currentReadBytes == -1) {
@@ -138,8 +149,14 @@ int main(int argc, char* argv[]) {
 		}
 		totalReadBytes += currentReadBytes;
 	}
+	*/
 
-	Response response(buffer);
+	Response response(responseBuffer);
+	int16_t responseAPIKey = correlationToAPIKey[response.getCorrelationId()];
+	response.parseResponse(responseBuffer, responseAPIKey);	
+	//if (response.correlationId == 18) {
+//
+//	}
 	response.toString();
 
 	close(clientFD);

@@ -91,7 +91,6 @@ int main(int argc, char* argv[]) {
 	int16_t errorCode;	
 	if (request.getRequestAPIKey() == 18) {
 		if (request.getRequestAPIVersion() >= 0 && request.getRequestAPIVersion() <= 4) {
-			std::cout << "Inside" << std::endl;
 			errorCode = htons(ERROR_NONE);
 			appendValue(errorCode, header);
 			
