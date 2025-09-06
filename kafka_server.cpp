@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
 	int16_t errorCode;	
 	if (request.getRequestAPIKey() == 18) {
 		if (request.getRequestAPIVersion() >= 0 && request.getRequestAPIVersion() <= 4) {
-			errorCode = htons(ERROR_NONE);
+			errorCode = ERROR_NONE;
 			appendValue(errorCode, header);
 			
 			int8_t supportedAPIsLength = supportedAPIs.size() + 1;
@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
 			int8_t tagBuffer = 0;
 			header.push_back(static_cast<char>(tagBuffer));
 		} else {
-			errorCode = htons(UNSUPPORTED_VERSION);
+			errorCode = UNSUPPORTED_VERSION;
 			appendValue(errorCode, header);
 		}
 	}

@@ -1,4 +1,6 @@
 #include "request.hpp"
+#include "kafka_protocol.hpp"
+
 #include <bit>
 #include <cstdint>
 #include <cstring>
@@ -9,27 +11,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-namespace
-{
-	template <typename T>
-	T convertToBigEndian(char* bytes) {
-		T ret = 0;
-		memcpy(&ret, bytes, sizeof(ret));
-		if constexpr (sizeof(T) > 1) {
-			if constexpr (std::endian::native == std::endian::little) {
-				ret = std::byteswap(ret);
-			}
-		}
-		return ret;
-	}
-
-	template <typename T>
-	T readBigEndian(char* bytes, int& offset) {
-		T val = convertToBigEndian<T>(bytes + offset);
-		offset += sizeof(T);
-		return val;
-	}
-}
 
 
 std::vector<char> Request::readRequest(int clientFD) {
@@ -70,13 +51,13 @@ Request::Request(std::vector<char> bytes) : requestMessageSize(bytes.size() - si
 	char* data = bytes.data();
 	int offset = 0;
 
-	requestHeader.requestAPIKey = readBigEndian<int16_t>(data, offset);
+	requestHeader.requestAPIKey = kafka::readBigEndian<int16_t>(data, offset);
 	
-	requestHeader.requestAPIVersion = readBigEndian<int16_t>(data, offset);
+	requestHeader.requestAPIVersion = kafka::readBigEndian<int16_t>(data, offset);
 	
-	requestHeader.correlationId = readBigEndian<int32_t>(data, offset);
+	requestHeader.correlationId = kafka::readBigEndian<int32_t>(data, offset);
 	
-	int16_t clientIdLength = readBigEndian<int16_t>(data, offset);
+	int16_t clientIdLength = kafka::readBigEndian<int16_t>(data, offset);
 	if (clientIdLength > 0) {
 		if (offset + clientIdLength > bytes.size()) {
 			std::runtime_error("Error clientIdLength greater than bytes remaining");

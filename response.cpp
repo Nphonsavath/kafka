@@ -11,29 +11,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-
-namespace 
-{
-	template <typename T>
-	T convertToBigEndian(char* bytes) {
-		T ret = 0;
-		memcpy(&ret, bytes, sizeof(ret));
-		if constexpr (sizeof(T) > 1) {
-			if constexpr (std::endian::native == std::endian::little) {
-				ret = std::byteswap(ret);
-			}
-		}
-		return ret;
-	}
-
-	template<typename T>
-	T readBigEndian(char* bytes, int& offset) {
-		T val = convertToBigEndian<T>(bytes + offset);
-		offset += sizeof(T);
-		return val;
-	}
-}
-
 std::vector<char> Response::readResponse(int clientFD) {
 	int expectedMessageLength = 0;
 	int totalReadBytes = 0;
@@ -68,31 +45,31 @@ void Response::parseAPIVersionsResponse(std::vector<char> bytes) {
 	int offset = 4;
 
 	APIVersionsResponseBodyV4 body;
-	body.errorCode = readBigEndian<int16_t>(data, offset);
+	body.errorCode = kafka::readBigEndian<int16_t>(data, offset);
 	
-	int8_t APIVersionsArrayLength = readBigEndian<int8_t>(data, offset) - 1;
+	int8_t APIVersionsArrayLength = kafka::readBigEndian<int8_t>(data, offset) - 1;
 	std::cout << "APIVersionsArrayLength: " << static_cast<int>(APIVersionsArrayLength) << std::endl;
 	for (int i = 0; i < APIVersionsArrayLength; i++) {
 		APIKeyVersion api;
 
-		api.APIKey = readBigEndian<int16_t>(data, offset);
+		api.APIKey = kafka::readBigEndian<int16_t>(data, offset);
 		std::cout << "api.APIKey: " << api.APIKey << std::endl;
 		
-		api.minVersion = readBigEndian<int16_t>(data, offset);
+		api.minVersion = kafka::readBigEndian<int16_t>(data, offset);
 		std::cout << "api.minVersion: " << api.minVersion << std::endl;
 
-		api.maxVersion = readBigEndian<int16_t>(data, offset);
+		api.maxVersion = kafka::readBigEndian<int16_t>(data, offset);
 		std::cout << "api.maxVersion: " << api.maxVersion << std::endl;
 
-		api.tagBuffer = readBigEndian<int8_t>(data, offset);
+		api.tagBuffer = kafka::readBigEndian<int8_t>(data, offset);
 		std::cout << "api.tagBuffer: " << static_cast<int>(api.tagBuffer) << std::endl;
 		
 		body.APIKeys.push_back(api);	
 	}
 	
-	body.throttleTimeMs = readBigEndian<int32_t>(data, offset);
+	body.throttleTimeMs = kafka::readBigEndian<int32_t>(data, offset);
 
-	body.tagBuffer = readBigEndian<int8_t>(data, offset);
+	body.tagBuffer = kafka::readBigEndian<int8_t>(data, offset);
 	responseData = body;
 }
 
@@ -107,7 +84,7 @@ Response::Response(std::vector<char> bytes) {
 	char* data = bytes.data();
 	int offset = 0;
 
-	responseHeader.correlationId = readBigEndian<int32_t>(data, offset);
+	responseHeader.correlationId = kafka::readBigEndian<int32_t>(data, offset);
 	
 	//std::variant<APIVersionsResponseBodyV4> responseDaa;
 
