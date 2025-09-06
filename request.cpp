@@ -15,13 +15,14 @@ namespace
 	T convertToBigEndian(char* bytes) {
 		T ret = 0;
 		memcpy(&ret, bytes, sizeof(ret));
-		if constexpr (std::endian::native == std::endian::little) {
-			ret = std::byteswap(ret);
+		if constexpr (sizeof(T) > 1) {
+			if constexpr (std::endian::native == std::endian::little) {
+				ret = std::byteswap(ret);
+			}
 		}
 		return ret;
 	}
 }
-
 std::vector<char> Request::readRequest(int clientFD) {
 	int expectedMessageLength = 0;
 	int totalReadBytes = 0;

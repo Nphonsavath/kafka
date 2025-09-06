@@ -18,14 +18,12 @@ namespace
 	T convertToBigEndian(char* bytes) {
 		T ret = 0;
 		memcpy(&ret, bytes, sizeof(ret));
-		if constexpr (sizeof(T) == 1) {
-			return ret;
-		} else {
+		if constexpr (sizeof(T) > 1) {
 			if constexpr (std::endian::native == std::endian::little) {
 				ret = std::byteswap(ret);
 			}
-			return ret;
 		}
+		return ret;
 	}
 }
 
