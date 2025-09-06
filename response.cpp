@@ -25,6 +25,13 @@ namespace
 		}
 		return ret;
 	}
+
+	template<typename T>
+	T readBigEndian(char* bytes, int& offset) {
+		T val = convertToBigEndian<T>(bytes + offset);
+		offset += sizeof(T);
+		return val;
+	}
 }
 
 std::vector<char> Response::readResponse(int clientFD) {
@@ -61,39 +68,31 @@ void Response::parseAPIVersionsResponse(std::vector<char> bytes) {
 	int offset = 4;
 
 	APIVersionsResponseBodyV4 body;
-	body.errorCode = convertToBigEndian<int16_t>(data + offset);
-	offset += sizeof(body.errorCode);
+	body.errorCode = readBigEndian<int16_t>(data, offset);
 	
-	int8_t APIVersionsArrayLength = convertToBigEndian<int8_t>(data + offset) - 1;
+	int8_t APIVersionsArrayLength = readBigEndian<int8_t>(data, offset) - 1;
 	std::cout << "APIVersionsArrayLength: " << static_cast<int>(APIVersionsArrayLength) << std::endl;
-	offset += sizeof(APIVersionsArrayLength);
 	for (int i = 0; i < APIVersionsArrayLength; i++) {
 		APIKeyVersion api;
 
-		api.APIKey = convertToBigEndian<int16_t>(data + offset);
+		api.APIKey = readBigEndian<int16_t>(data, offset);
 		std::cout << "api.APIKey: " << api.APIKey << std::endl;
-	       	offset += sizeof(api.APIKey);
 		
-		api.minVersion = convertToBigEndian<int16_t>(data + offset);
-		offset += sizeof(api.minVersion);
+		api.minVersion = readBigEndian<int16_t>(data, offset);
 		std::cout << "api.minVersion: " << api.minVersion << std::endl;
 
-		api.maxVersion = convertToBigEndian<int16_t>(data + offset);
-		offset += sizeof(api.maxVersion);
+		api.maxVersion = readBigEndian<int16_t>(data, offset);
 		std::cout << "api.maxVersion: " << api.maxVersion << std::endl;
 
-		api.tagBuffer = convertToBigEndian<int8_t>(data + offset);
-		offset += sizeof(api.tagBuffer);
+		api.tagBuffer = readBigEndian<int8_t>(data, offset);
 		std::cout << "api.tagBuffer: " << static_cast<int>(api.tagBuffer) << std::endl;
 		
 		body.APIKeys.push_back(api);	
 	}
 	
-	body.throttleTimeMs = convertToBigEndian<int32_t>(data + offset);
-	offset += sizeof(body.throttleTimeMs);
+	body.throttleTimeMs = readBigEndian<int32_t>(data, offset);
 
-	body.tagBuffer = convertToBigEndian<int8_t>(data + offset);
-	offset += sizeof(body.tagBuffer);
+	body.tagBuffer = readBigEndian<int8_t>(data, offset);
 	responseData = body;
 }
 
@@ -108,8 +107,7 @@ Response::Response(std::vector<char> bytes) {
 	char* data = bytes.data();
 	int offset = 0;
 
-	responseHeader.correlationId = convertToBigEndian<std::int32_t>(data + offset);
-	offset += sizeof(responseHeader.correlationId);
+	responseHeader.correlationId = readBigEndian<int32_t>(data, offset);
 	
 	//std::variant<APIVersionsResponseBodyV4> responseDaa;
 

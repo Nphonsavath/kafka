@@ -22,7 +22,16 @@ namespace
 		}
 		return ret;
 	}
+
+	template <typename T>
+	T readBigEndian(char* bytes, int& offset) {
+		T val = convertToBigEndian<T>(bytes + offset);
+		offset += sizeof(T);
+		return val;
+	}
 }
+
+
 std::vector<char> Request::readRequest(int clientFD) {
 	int expectedMessageLength = 0;
 	int totalReadBytes = 0;
@@ -61,20 +70,13 @@ Request::Request(std::vector<char> bytes) : requestMessageSize(bytes.size() - si
 	char* data = bytes.data();
 	int offset = 0;
 
-	//requestMessageSize = convertToBigEndian<int32_t>(data + offset);
-	//offset += sizeof(requestMessageSize);
-
-	requestHeader.requestAPIKey = convertToBigEndian<int16_t>(data + offset);
-	offset += sizeof(requestHeader.requestAPIKey);
+	requestHeader.requestAPIKey = readBigEndian<int16_t>(data, offset);
 	
-	requestHeader.requestAPIVersion = convertToBigEndian<int16_t>(data + offset);
-	offset += sizeof(requestHeader.requestAPIVersion);
+	requestHeader.requestAPIVersion = readBigEndian<int16_t>(data, offset);
 	
-	requestHeader.correlationId = convertToBigEndian<int32_t>(data + offset);
-	offset += sizeof(requestHeader.correlationId);
+	requestHeader.correlationId = readBigEndian<int32_t>(data, offset);
 	
-	int16_t clientIdLength = convertToBigEndian<int16_t>(data + offset);
-	offset += sizeof(clientIdLength);
+	int16_t clientIdLength = readBigEndian<int16_t>(data, offset);
 	if (clientIdLength > 0) {
 		if (offset + clientIdLength > bytes.size()) {
 			std::runtime_error("Error clientIdLength greater than bytes remaining");
