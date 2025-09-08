@@ -25,6 +25,7 @@
     - https://www.nootcode.com/knowledge/en/kafka-zero-copy [2]
   - Kafka Protocol Guide
     - https://kafka.apache.org/protocol
+    - https://makefiletutorial.com
 
 9. Images
   - https://i0.wp.com/lab.wallarm.com/wp-content/uploads/2024/01/280-min.jpg?w=770&ssl=1 {1}
