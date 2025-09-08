@@ -8,22 +8,24 @@ BUILD_DIR = build
 BIN_DIR = bin
 
 TARGETS = $(BIN_DIR)/server $(BIN_DIR)/client
-
+DEPENDENCIES = $(BUILD_DIR)/kafka_server.d $(BUILD_DIR)/kafka_client.d $(BUILD_DIR)/request.d $(BUILD_DIR)/response.d
 .PHONY: all clean
 
 all: $(TARGETS) 
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 $(BIN_DIR)/server: $(BUILD_DIR)/kafka_server.o $(BUILD_DIR)/request.o $(BUILD_DIR)/response.o | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@
 
 $(BIN_DIR)/client: $(BUILD_DIR)/kafka_client.o $(BUILD_DIR)/request.o $(BUILD_DIR)/response.o | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@
 
 $(BUILD_DIR) $(BIN_DIR):
 	mkdir -p $@
 
 clean:
 	rm -rf $(BUILD_DIR) $(BIN_DIR)
+
+-include $(DEPENDENCIES)
