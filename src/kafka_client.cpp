@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
 			reinterpret_cast<char*>(&requestAPIKey), 
 			reinterpret_cast<char*>(&requestAPIKey) + sizeof(requestAPIKey));
 
-	int16_t requestAPIVersion = htons(4);
+	int16_t requestAPIVersion = htons(5);
 	header.insert(header.end(), 
 			reinterpret_cast<char*>(&requestAPIVersion), 
 			reinterpret_cast<char*>(&requestAPIVersion) + sizeof(requestAPIVersion));
@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
 			reinterpret_cast<char*>(&correlationId), 
 			reinterpret_cast<char*>(&correlationId) + sizeof(correlationId));
 
-	std::string headerClientId = "kafka-cli";
+	std::string headerClientId = "kafka-clitest";
     	int16_t headerClientIdLength = htons(static_cast<int16_t>(headerClientId.size()));
     	header.insert(header.end(), 
 			reinterpret_cast<char*>(&headerClientIdLength), 
