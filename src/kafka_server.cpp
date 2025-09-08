@@ -25,7 +25,7 @@ void appendValue(T value, std::vector<char>& buffer) {
 	}
 }
 
-int main(int argc, char* argv[]) {
+int main() {
 	//Create TCP socket using IPv4. 
 	int serverFD = socket(AF_INET, SOCK_STREAM, 0);
 	if (serverFD  == -1) {

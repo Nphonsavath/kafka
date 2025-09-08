@@ -1,27 +1,29 @@
 CXX = g++
 CXXFLAGS = -Wall -Wextra -pedantic -g -std=c++23
+CPPFLAGS = -Iinclude -MMD -MP
+
+SRC_DIR = src
+INCLUDE_DIR = include
+BUILD_DIR = build
+BIN_DIR = bin
+
+TARGETS = $(BIN_DIR)/server $(BIN_DIR)/client
 
 .PHONY: all clean
 
-all: server client
+all: $(TARGETS) 
 
-request.o: request.cpp request.hpp kafka_protocol.hpp
-	$(CXX) $(CXXFLAGS) -c request.cpp -o $@
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
-response.o: response.cpp response.hpp kafka_protocol.hpp
-	$(CXX) $(CXXFLAGS) -c response.cpp -o $@
+$(BIN_DIR)/server: $(BUILD_DIR)/kafka_server.o $(BUILD_DIR)/request.o $(BUILD_DIR)/response.o | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ -o $@
 
-server.o: kafka_server.cpp request.hpp response.hpp kafka_protocol.hpp
-	$(CXX) $(CXXFLAGS) -c kafka_server.cpp -o $@
+$(BIN_DIR)/client: $(BUILD_DIR)/kafka_client.o $(BUILD_DIR)/request.o $(BUILD_DIR)/response.o | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ -o $@
 
-client.o: kafka_client.cpp request.hpp response.hpp kafka_protocol.hpp
-	$(CXX) $(CXXFLAGS) -c kafka_client.cpp -o $@
-
-server: server.o request.o response.o
-	$(CXX) $(CXXFLAGS) $^ -o $@
-
-client: client.o request.o response.o
-	$(CXX) $(CXXFLAGS) $^ -o $@
+$(BUILD_DIR) $(BIN_DIR):
+	mkdir -p $@
 
 clean:
-	rm -f *.o server client
+	rm -rf $(BUILD_DIR) $(BIN_DIR)

@@ -59,7 +59,7 @@ Request::Request(std::vector<char> bytes) : requestMessageSize(bytes.size() - si
 	
 	int16_t clientIdLength = kafka::readBigEndian<int16_t>(data, offset);
 	if (clientIdLength > 0) {
-		if (offset + clientIdLength > bytes.size()) {
+		if (offset + clientIdLength > static_cast<int>(bytes.size())) {
 			std::runtime_error("Error clientIdLength greater than bytes remaining");
 		}
 		requestHeader.clientIdNullable = std::string(data + offset, clientIdLength);
