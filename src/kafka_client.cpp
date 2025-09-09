@@ -71,6 +71,10 @@ void appendValue(T value, std::vector<char>& buffer) {
 	}
 }
 
+void appendValue(const std::string& str, std::vector<char>& buffer) {
+	buffer.insert(buffer.end(), str.begin(), str.end());
+}
+
 int main(int argc, char* argv[]) {
 	std::string serverIP;
 	int serverPort;
@@ -94,20 +98,16 @@ int main(int argc, char* argv[]) {
 	int16_t requestAPIKey = 18;
 	appendValue(requestAPIKey, header);
 
-	int16_t requestAPIVersion = 4;
+	int16_t requestAPIVersion = 5;
 	appendValue(requestAPIVersion, header);
 	
 	int32_t correlationId = 7;
 	appendValue(correlationId, header);
 
 	std::string headerClientId = "kafka-clitest";
-    	int16_t headerClientIdLength = htons(static_cast<int16_t>(headerClientId.size()));
-    	header.insert(header.end(), 
-			reinterpret_cast<char*>(&headerClientIdLength), 
-			reinterpret_cast<char*>(&headerClientIdLength) + sizeof(headerClientIdLength));
-    	header.insert(header.end(),
-			headerClientId.begin(),
-			headerClientId.end());
+    	int16_t headerClientIdLength = headerClientId.size();
+	appendValue(headerClientIdLength, header);
+    	appendValue(headerClientId, header);
 				  
 	APIVersionRequestBodyV4 body {
 		"kafka-cli",
@@ -115,31 +115,19 @@ int main(int argc, char* argv[]) {
 		0
 	};
 
-	int8_t bodyClientIdLength = static_cast<int8_t>(body.clientIdCompact.size());
-	header.insert(header.end(),
-			reinterpret_cast<char*>(&bodyClientIdLength),
-			reinterpret_cast<char*>(&bodyClientIdLength) + sizeof(bodyClientIdLength));
-	header.insert(header.end(),
-			body.clientIdCompact.begin(),
-			body.clientIdCompact.end());
+	int8_t bodyClientIdLength = body.clientIdCompact.size();
+	appendValue(bodyClientIdLength, header);
+	appendValue(body.clientIdCompact, header);	
 
-	int8_t bodyClientIdSoftwareVerLength = static_cast<int8_t>(body.clientIdSoftwareVerCompact.size());
-	header.insert(header.end(),
-			reinterpret_cast<char*>(&bodyClientIdSoftwareVerLength),
-			reinterpret_cast<char*>(&bodyClientIdSoftwareVerLength) + sizeof(bodyClientIdSoftwareVerLength));
-	header.insert(header.end(),
-			body.clientIdSoftwareVerCompact.begin(),
-			body.clientIdSoftwareVerCompact.end());
-
-	header.insert(header.end(),
-			reinterpret_cast<char*>(&body.tagBuffer),
-			reinterpret_cast<char*>(&body.tagBuffer) + sizeof(body.tagBuffer));
+	int8_t bodyClientIdSoftwareVerLength = body.clientIdSoftwareVerCompact.size();
+	appendValue(bodyClientIdSoftwareVerLength, header);
+	appendValue(body.clientIdSoftwareVerCompact, header);
+	appendValue(body.tagBuffer, header);
 
 	int32_t totalMessageSize = htonl(header.size());
 	std::cout << ntohl(totalMessageSize) << std::endl;
 	memcpy(header.data(), &totalMessageSize, sizeof(totalMessageSize));	
 	
-	//send(clientFD, &totalMessageSize, sizeof(totalMessageSize), 0);
 	send(clientFD, header.data(), header.size(), 0);
 	std::unordered_map<int32_t, int16_t> correlationToAPIKey;
 	correlationToAPIKey[correlationId] = requestAPIKey;
