@@ -9,6 +9,7 @@
 
 constexpr int16_t ERROR_NONE = 0;
 constexpr int16_t UNSUPPORTED_VERSION = 35;
+constexpr int MAX_CONNECTION_REQUESTS = 5;
 
 namespace kafka
 {

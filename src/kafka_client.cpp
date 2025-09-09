@@ -9,13 +9,16 @@
 #include <vector>
 #include <cstring>
 #include <unordered_map>
+#include <thread>
 
 #include "kafka_protocol.hpp"
 #include "request.hpp"
 #include "response.hpp"
 
+constexpr int EXPECTED_NUM_ARGS = 3;
+
 int parseArgs(int numArgs, char* argv[], std::string& serverIP, int& serverPort) {
-	if (numArgs < 3) {
+	if (numArgs < EXPECTED_NUM_ARGS) {
 		std::cerr << "Usage ./client <IPv4 address> <port #>" << std::endl;
 		return -1;
 	}
@@ -93,6 +96,19 @@ std::vector<char> buildRequest(kafkaRequestHeaderV2& header, IRequestBody& body)
 	return buffer;
 }
 
+void sendRequest(int clientFD, std::vector<char>& request, std::unordered_map<int32_t, int16_t> correlationToAPIKey) {
+	send(clientFD, request.data(), request.size(), 0);
+
+	std::vector<char> responseBuffer = Response::readResponse(clientFD);
+	Response response(responseBuffer);
+	std::cout << "Response correlation Id: " << response.getCorrelationId() << std::endl;
+
+	int16_t responseAPIKey = correlationToAPIKey[response.getCorrelationId()];
+	response.parseResponse(responseBuffer, responseAPIKey);	
+
+	response.toString();
+}
+
 int main(int argc, char* argv[]) {
 	std::string serverIP;
 	int serverPort;
@@ -107,24 +123,18 @@ int main(int argc, char* argv[]) {
 		close(clientFD);
 		return -1; 
 	}
-		
-	kafkaRequestHeaderV2 requestHeader = makeHeader(18, 5, 7, "TESTING", 0);
+
+	std::vector<std::thread> threads;	
+
+	kafkaRequestHeaderV2 requestHeader = makeHeader(18, 0, 7, "kafka-cli", 0);
        	APIVersionRequestBodyV4 body = makeAPIVersionBody("kafka-cli", "0.1", 0);	
 	std::vector<char> header = buildRequest(requestHeader, body);
-		
-	send(clientFD, header.data(), header.size(), 0);
 
 	std::unordered_map<int32_t, int16_t> correlationToAPIKey;
 	correlationToAPIKey[requestHeader.correlationId] = requestHeader.requestAPIKey;
+
+	sendRequest(clientFD, header, correlationToAPIKey);	
 	
-	std::vector<char> responseBuffer = Response::readResponse(clientFD);
-	Response response(responseBuffer);
-	std::cout << "Response correlation Id: " << response.getCorrelationId() << std::endl;
-	int16_t responseAPIKey = correlationToAPIKey[response.getCorrelationId()];
-	response.parseResponse(responseBuffer, responseAPIKey);	
-
-	response.toString();
-
 	close(clientFD);
 	return 0;
 

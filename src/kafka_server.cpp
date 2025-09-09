@@ -42,8 +42,7 @@ int main() {
 	inet_ntop(AF_INET, &(server.sin_addr), ipAsString, INET_ADDRSTRLEN);
 	std::cout << "IP Adress: " << ipAsString << ", Port #: " << ntohs(server.sin_port) << std::endl;
 
-	int maxConnectionRequests = 5;
-	if (listen(serverFD, maxConnectionRequests) == -1) {
+	if (listen(serverFD, MAX_CONNECTION_REQUESTS) == -1) {
 		close(serverFD);
 		std::cerr << "Error listening for connections." << std::endl;
 		return -1;	
