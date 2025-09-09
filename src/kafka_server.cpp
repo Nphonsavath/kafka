@@ -17,8 +17,8 @@ void appendValue(T value, std::vector<char>& buffer) {
 	if constexpr (sizeof(T) == 1) {
 		buffer.push_back(static_cast<char>(value));
 	} else {
-		if constexpr (sizeof(T) == 2) { value = htons(static_cast<T>(value)); }
-		if constexpr (sizeof(T) == 4) { value = htonl(static_cast<T>(value)); }
+		if constexpr (sizeof(T) == 2) { value = htons(static_cast<uint16_t>(value)); }
+		if constexpr (sizeof(T) == 4) { value = htonl(static_cast<uint32_t>(value)); }
 		buffer.insert(buffer.end(),
 				reinterpret_cast<char*>(&value),
 				reinterpret_cast<char*>(&value) + sizeof(value));

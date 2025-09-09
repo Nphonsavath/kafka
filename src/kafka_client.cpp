@@ -14,7 +14,7 @@
 #include "request.hpp"
 #include "response.hpp"
 
-int parseArgs(const int numArgs, const char* argv[], std::string& serverIP, int& serverPort) {
+int parseArgs(int numArgs, char* argv[], std::string& serverIP, int& serverPort) {
 	if (numArgs < 3) {
 		std::cerr << "Usage ./client <IPv4 address> <port #>" << std::endl;
 		return -1;
@@ -58,6 +58,19 @@ bool connectSocket(int clientFD, const std::string& serverIP, int serverPort) {
 	return true;
 }
 
+template <typename T>
+void appendValue(T value, std::vector<char>& buffer) {
+	if constexpr (sizeof(T) == 1) {
+		buffer.push_back(static_cast<char>(value));
+	} else {
+		if constexpr (sizeof(T) == 2) { value = htons(static_cast<uint16_t>(value)); }
+		if constexpr (sizeof(T) == 4) { value = htonl(static_cast<uint32_t>(value)); }
+		buffer.insert(buffer.end(),
+				reinterpret_cast<char*>(&value),
+				reinterpret_cast<char*>(&value) + sizeof(value));
+	}
+}
+
 int main(int argc, char* argv[]) {
 	std::string serverIP;
 	int serverPort;
@@ -75,26 +88,17 @@ int main(int argc, char* argv[]) {
 		
 	std::vector<char> header;
 	
-	int32_t messageSize = htonl(0);
-	header.insert(header.end(), 
-			reinterpret_cast<char*>(&messageSize), 
-			reinterpret_cast<char*>(&messageSize) + sizeof(messageSize));
+	int32_t messageSize = 0;
+	appendValue(messageSize, header);
+
+	int16_t requestAPIKey = 18;
+	appendValue(requestAPIKey, header);
+
+	int16_t requestAPIVersion = 5;
+	appendValue(requestAPIVersion, header);
 	
-
-	int16_t requestAPIKey = htons(18);
-	header.insert(header.end(), 
-			reinterpret_cast<char*>(&requestAPIKey), 
-			reinterpret_cast<char*>(&requestAPIKey) + sizeof(requestAPIKey));
-
-	int16_t requestAPIVersion = htons(5);
-	header.insert(header.end(), 
-			reinterpret_cast<char*>(&requestAPIVersion), 
-			reinterpret_cast<char*>(&requestAPIVersion) + sizeof(requestAPIVersion));
-
-	int32_t correlationId = htonl(7);
-	header.insert(header.end(), 
-			reinterpret_cast<char*>(&correlationId), 
-			reinterpret_cast<char*>(&correlationId) + sizeof(correlationId));
+	int32_t correlationId = 7;
+	appendValue(correlationId, header);
 
 	std::string headerClientId = "kafka-clitest";
     	int16_t headerClientIdLength = htons(static_cast<int16_t>(headerClientId.size()));
