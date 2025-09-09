@@ -9,33 +9,6 @@
 
 constexpr int16_t ERROR_NONE = 0;
 constexpr int16_t UNSUPPORTED_VERSION = 35;
-struct kafkaRequestHeaderV2 {
-	int16_t requestAPIKey;
-	int16_t requestAPIVersion;
-	int32_t correlationId;
-	std::string clientIdNullable;
-	int8_t tagBuffer;
-};
-
-struct APIVersionRequestBodyV4 {
-	std::string clientIdCompact;
-	std::string clientIdSoftwareVerCompact;
-	int8_t tagBuffer;
-};
-
-struct APIKeyVersion {
-	int16_t APIKey;
-	int16_t minVersion;
-	int16_t maxVersion;
-	int8_t tagBuffer;
-};
-
-struct APIVersionsResponseBodyV4 {
-	int16_t errorCode;
-	std::vector<APIKeyVersion> APIKeys;
-	int32_t throttleTimeMs;
-	int8_t tagBuffer;
-};
 
 namespace kafka
 {
@@ -75,6 +48,56 @@ namespace kafka
 		buffer.insert(buffer.end(), str.begin(), str.end());
 	}
 }
+
+struct IRequestBody {
+	virtual ~IRequestBody() = default;
+	virtual void appendToBuffer(std::vector<char>& buffer) = 0;
+};
+
+struct kafkaRequestHeaderV2 {
+	int16_t requestAPIKey;
+	int16_t requestAPIVersion;
+	int32_t correlationId;
+	std::string clientIdNullable;
+	int8_t tagBuffer;
+};
+
+struct APIVersionRequestBodyV4 : public IRequestBody {
+	std::string clientIdCompact;
+	std::string clientIdSoftwareVerCompact;
+	int8_t tagBuffer;
+
+APIVersionRequestBodyV4 (std::string clientId, std::string clientIdSoftwareVer, int8_t tag) 
+	: clientIdCompact(std::move(clientId)), 
+	clientIdSoftwareVerCompact(std::move(clientIdSoftwareVer)), 
+	tagBuffer(tag) {}
+	void appendToBuffer(std::vector<char>& buffer) override {
+		int8_t clientIdLength = clientIdCompact.size();
+		kafka::appendValue(clientIdLength, buffer);
+		kafka::appendValue(clientIdCompact, buffer);	
+
+		int8_t clientIdSoftwareVerLength = clientIdSoftwareVerCompact.size();
+		kafka::appendValue(clientIdSoftwareVerLength, buffer);
+		kafka::appendValue(clientIdSoftwareVerCompact, buffer);
+
+		kafka::appendValue(tagBuffer, buffer);
+	}
+};
+
+struct APIKeyVersion {
+	int16_t APIKey;
+	int16_t minVersion;
+	int16_t maxVersion;
+	int8_t tagBuffer;
+};
+
+struct APIVersionsResponseBodyV4 {
+	int16_t errorCode;
+	std::vector<APIKeyVersion> APIKeys;
+	int32_t throttleTimeMs;
+	int8_t tagBuffer;
+};
+
 
 
 #endif
