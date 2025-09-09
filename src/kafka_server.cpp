@@ -12,19 +12,6 @@
 #include "request.hpp"
 #include "response.hpp"
 
-template <typename T>
-void appendValue(T value, std::vector<char>& buffer) {
-	if constexpr (sizeof(T) == 1) {
-		buffer.push_back(static_cast<char>(value));
-	} else {
-		if constexpr (sizeof(T) == 2) { value = htons(static_cast<uint16_t>(value)); }
-		if constexpr (sizeof(T) == 4) { value = htonl(static_cast<uint32_t>(value)); }
-		buffer.insert(buffer.end(),
-				reinterpret_cast<char*>(&value),
-				reinterpret_cast<char*>(&value) + sizeof(value));
-	}
-}
-
 int main() {
 	//Create TCP socket using IPv4. 
 	int serverFD = socket(AF_INET, SOCK_STREAM, 0);
@@ -85,38 +72,38 @@ int main() {
 		std::vector<char> header;
 		
 		int32_t messageSize = 0;
-		appendValue(messageSize, header);
+		kafka::appendValue(messageSize, header);
 
 		int32_t correlationId = request.getCorrelationId();
-		appendValue(correlationId, header);
+		kafka::appendValue(correlationId, header);
 
 		int16_t errorCode;	
 		if (request.getRequestAPIKey() == 18) {
 			if (request.getRequestAPIVersion() >= 0 && request.getRequestAPIVersion() <= 4) {
 				errorCode = ERROR_NONE;
-				appendValue(errorCode, header);
+				kafka::appendValue(errorCode, header);
 				
 				int8_t supportedAPIsLength = supportedAPIs.size() + 1;
-				appendValue(supportedAPIsLength, header);
+				kafka::appendValue(supportedAPIsLength, header);
 				for (const APIKeyVersion& api : supportedAPIs) {
-					appendValue(api.APIKey, header);
+					kafka::appendValue(api.APIKey, header);
 					std::cout << "api.APIKey: " << api.APIKey << std::endl;
-					appendValue(api.minVersion, header);
+					kafka::appendValue(api.minVersion, header);
 					std::cout << "api.minVersion: " << api.minVersion << std::endl;
-					appendValue(api.maxVersion, header);
+					kafka::appendValue(api.maxVersion, header);
 					std::cout << "api.maxVersion: " << api.maxVersion << std::endl;
-					appendValue(api.tagBuffer, header);	
+					kafka::appendValue(api.tagBuffer, header);	
 					std::cout << "api.tagBuffer: " << static_cast<int>(api.tagBuffer) << std::endl;
 				}
 
 				int32_t throttleTime = 0;
-				appendValue(throttleTime, header);	
+				kafka::appendValue(throttleTime, header);	
 
 				int8_t tagBuffer = 0;
 				header.push_back(static_cast<char>(tagBuffer));
 			} else {
 				errorCode = UNSUPPORTED_VERSION;
-				appendValue(errorCode, header);
+				kafka::appendValue(errorCode, header);
 			}
 		}
 

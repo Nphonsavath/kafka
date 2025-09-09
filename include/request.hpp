@@ -1,6 +1,7 @@
 #ifndef REQUEST_HPP
 #define REQUEST_HPP
 
+#include "kafka_protocol.hpp"
 #include <vector>
 #include <string>
 
@@ -18,13 +19,6 @@ public:
 
 private:
 	int32_t requestMessageSize;
-	struct kafkaRequestHeaderV2 {
-		int16_t requestAPIKey;
-		int16_t requestAPIVersion;
-		int32_t correlationId;
-		std::string clientIdNullable;
-		int8_t tagBuffer;
-	};
 	kafkaRequestHeaderV2 requestHeader;
 };
 

@@ -58,21 +58,32 @@ bool connectSocket(int clientFD, const std::string& serverIP, int serverPort) {
 	return true;
 }
 
-template <typename T>
-void appendValue(T value, std::vector<char>& buffer) {
-	if constexpr (sizeof(T) == 1) {
-		buffer.push_back(static_cast<char>(value));
-	} else {
-		if constexpr (sizeof(T) == 2) { value = htons(static_cast<uint16_t>(value)); }
-		if constexpr (sizeof(T) == 4) { value = htonl(static_cast<uint32_t>(value)); }
-		buffer.insert(buffer.end(),
-				reinterpret_cast<char*>(&value),
-				reinterpret_cast<char*>(&value) + sizeof(value));
-	}
+kafkaRequestHeaderV2 makeHeader(int16_t requestAPIKey, int16_t requestAPIVersion, int32_t correlationId,
+		std::string clientIdNullable, int8_t tagBuffer) {
+	return {requestAPIKey, requestAPIVersion, correlationId, clientIdNullable, tagBuffer}; 
 }
 
-void appendValue(const std::string& str, std::vector<char>& buffer) {
-	buffer.insert(buffer.end(), str.begin(), str.end());
+APIVersionRequestBodyV4 makeAPIVersionBody(std::string clientIdCompact, std::string clientIdSoftwareVerCompact,
+		int8_t tagBuffer) {
+	return {clientIdCompact, clientIdSoftwareVerCompact, tagBuffer};
+}
+
+std::vector<char> buildRequest(const kafkaRequestHeaderV2& header) {
+	std::vector<char> buffer;
+	
+	int32_t messageSize = 0;
+	kafka::appendValue(messageSize, buffer);
+	
+	kafka::appendValue(header.requestAPIKey, buffer);
+	
+	kafka::appendValue(header.requestAPIVersion, buffer);
+	
+	kafka::appendValue(header.correlationId, buffer);
+	
+	int16_t clientIdLength = header.clientIdNullable.size();
+	kafka::appendValue(clientIdLength, buffer);
+    	kafka::appendValue(header.clientIdNullable, buffer);
+	return buffer;
 }
 
 int main(int argc, char* argv[]) {
@@ -90,24 +101,25 @@ int main(int argc, char* argv[]) {
 		return -1; 
 	}
 		
-	std::vector<char> header;
+	kafkaRequestHeaderV2 requestHeader = makeHeader(18, 4, 7, "Noah", 0);
+	std::vector<char> header = buildRequest(requestHeader);
+		
+	//int32_t messageSize = 0;
+	//kafka::appendValue(messageSize, header);
+
+	//int16_t requestAPIKey = 18;
+	//kafka::appendValue(requestAPIKey, header);
+
+	//int16_t requestAPIVersion = 5;
+	//kafka::appendValue(requestAPIVersion, header);
 	
-	int32_t messageSize = 0;
-	appendValue(messageSize, header);
+	//int32_t correlationId = 7;
+	//kafka::appendValue(correlationId, header);
 
-	int16_t requestAPIKey = 18;
-	appendValue(requestAPIKey, header);
-
-	int16_t requestAPIVersion = 5;
-	appendValue(requestAPIVersion, header);
-	
-	int32_t correlationId = 7;
-	appendValue(correlationId, header);
-
-	std::string headerClientId = "kafka-clitest";
-    	int16_t headerClientIdLength = headerClientId.size();
-	appendValue(headerClientIdLength, header);
-    	appendValue(headerClientId, header);
+	//std::string headerClientId = "kafka-clitest";
+    	//int16_t headerClientIdLength = headerClientId.size();
+	//kafka::appendValue(headerClientIdLength, header);
+    	//kafka::appendValue(headerClientId, header);
 				  
 	APIVersionRequestBodyV4 body {
 		"kafka-cli",
@@ -116,13 +128,13 @@ int main(int argc, char* argv[]) {
 	};
 
 	int8_t bodyClientIdLength = body.clientIdCompact.size();
-	appendValue(bodyClientIdLength, header);
-	appendValue(body.clientIdCompact, header);	
+	kafka::appendValue(bodyClientIdLength, header);
+	kafka::appendValue(body.clientIdCompact, header);	
 
 	int8_t bodyClientIdSoftwareVerLength = body.clientIdSoftwareVerCompact.size();
-	appendValue(bodyClientIdSoftwareVerLength, header);
-	appendValue(body.clientIdSoftwareVerCompact, header);
-	appendValue(body.tagBuffer, header);
+	kafka::appendValue(bodyClientIdSoftwareVerLength, header);
+	kafka::appendValue(body.clientIdSoftwareVerCompact, header);
+	kafka::appendValue(body.tagBuffer, header);
 
 	int32_t totalMessageSize = htonl(header.size());
 	std::cout << ntohl(totalMessageSize) << std::endl;
@@ -130,7 +142,7 @@ int main(int argc, char* argv[]) {
 	
 	send(clientFD, header.data(), header.size(), 0);
 	std::unordered_map<int32_t, int16_t> correlationToAPIKey;
-	correlationToAPIKey[correlationId] = requestAPIKey;
+	correlationToAPIKey[requestHeader.correlationId] = requestHeader.requestAPIKey;
 	std::vector<char> responseBuffer = Response::readResponse(clientFD);
 
 	Response response(responseBuffer);
