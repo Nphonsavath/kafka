@@ -14,40 +14,65 @@
 #include "request.hpp"
 #include "response.hpp"
 
-int main(int argc, char* argv[]) {
-	if (argc < 3) {
+int parseArgs(const int numArgs, const char* argv[], std::string& serverIP, int& serverPort) {
+	if (numArgs < 3) {
 		std::cerr << "Usage ./client <IPv4 address> <port #>" << std::endl;
-		return 1;
+		return -1;
 	}
 
-	char* serverIP = argv[1];
-	int serverPort = std::atoi(argv[2]);
+	serverIP = argv[1];
+	serverPort = std::atoi(argv[2]);
+	return 0;
+}
 
+int createSocket() {
 	int clientFD = socket(AF_INET, SOCK_STREAM, 0);
 	if (clientFD  == -1) {
-		std::cerr << "Error creating client socket." << std::endl;
-		return 1;
+		std::cerr << "Error creating socket." << std::endl;
+		return -1;
 	}
+	return clientFD;
+}
 
+bool connectSocket(int clientFD, const std::string& serverIP, int serverPort) {
 	struct sockaddr_in server;
 	server.sin_family = AF_INET;
 	server.sin_port = htons(serverPort);
 
-	if (inet_pton(AF_INET, serverIP, &server.sin_addr) == 0) {
-		close(clientFD);
+	int networkConversionResult = inet_pton(AF_INET, serverIP.c_str(), &server.sin_addr); 
+	if (networkConversionResult == 0) {
 		std::cerr << "Error reading IP Address" << std::endl;
-		return -1;
-	}
+		return false;
+	} else if (networkConversionResult == -1) {
+		std::cerr << "Error af does not contain a valid address family" << std::endl;
+		return false;
+	}	
 
 	int connectionResult = connect(clientFD, (sockaddr*) &server, sizeof(server));
 	if (connectionResult == -1) {
-		close(clientFD);
 		std::cerr << "Error connecting client with server." << std::endl;
-		return 1;
+		return false;
 	}
 
 	std::cout << "Successfully connected with server.\n";
-	
+	return true;
+}
+
+int main(int argc, char* argv[]) {
+	std::string serverIP;
+	int serverPort;
+	if (parseArgs(argc, argv, serverIP, serverPort) == -1) { 
+		return -1; 
+	}
+
+	int clientFD = createSocket();
+	if (clientFD == -1) { return -1; }	
+
+	if (!connectSocket(clientFD, serverIP, serverPort)) { 
+		close(clientFD);
+		return -1; 
+	}
+		
 	std::vector<char> header;
 	
 	int32_t messageSize = htonl(0);
@@ -109,54 +134,18 @@ int main(int argc, char* argv[]) {
 	int32_t totalMessageSize = htonl(header.size());
 	std::cout << ntohl(totalMessageSize) << std::endl;
 	memcpy(header.data(), &totalMessageSize, sizeof(totalMessageSize));	
-	//std::cout << "totalMessageSize: " << totalMessageSize << std::endl;
-	//Request request(header);
-
-	//std::cout << sizeof(request) << std::endl;	
-	//int messageSize = htonl(sizeof(request));
-	//std::cout << "MessageSize: " << messageSize << std::endl;
+	
 	//send(clientFD, &totalMessageSize, sizeof(totalMessageSize), 0);
 	send(clientFD, header.data(), header.size(), 0);
 	std::unordered_map<int32_t, int16_t> correlationToAPIKey;
 	correlationToAPIKey[ntohl(correlationId)] = ntohs(requestAPIKey);
 	std::vector<char> responseBuffer = Response::readResponse(clientFD);
-	/*	
-	int expectedMessageLength = 0;
-	int totalReadBytes = 0;
-	if (recv(clientFD, &expectedMessageLength, sizeof(expectedMessageLength), 0) == -1) {
-		std::cerr << "Error reading from client fd" << std::endl;
-		return 1;	
-	}
-	expectedMessageLength = ntohl(expectedMessageLength);
-	totalReadBytes += sizeof(expectedMessageLength);
-
-	std::cout << "Expected message length: " << expectedMessageLength << std::endl;
-	std::vector<char> buffer(expectedMessageLength);
-	while (totalReadBytes < expectedMessageLength) {
-		int currentReadBytes = recv(clientFD, 
-				buffer.data() + totalReadBytes - sizeof(expectedMessageLength), 
-				expectedMessageLength - totalReadBytes, 
-				0);
-		std::cout << "Currentreadbytes: " << currentReadBytes << std::endl;
-		std::cout << "Totalreadbytes: " << totalReadBytes << std::endl;
-		if (currentReadBytes == -1) {
-			std::cout << "Error reading data" << std::endl;
-			return 1;
-		} else if (currentReadBytes == 0) {
-			std::cout << "Completed reading data" << std::endl;
-			break;
-		}
-		totalReadBytes += currentReadBytes;
-	}
-	*/
 
 	Response response(responseBuffer);
 	std::cout << "Response correlation Id: " << response.getCorrelationId() << std::endl;
 	int16_t responseAPIKey = correlationToAPIKey[response.getCorrelationId()];
 	response.parseResponse(responseBuffer, responseAPIKey);	
-	//if (response.correlationId == 18) {
-//
-//	}
+
 	response.toString();
 
 	close(clientFD);

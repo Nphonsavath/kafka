@@ -30,7 +30,7 @@ int main() {
 	int serverFD = socket(AF_INET, SOCK_STREAM, 0);
 	if (serverFD  == -1) {
 		std::cerr << "Error creating server socket." << std::endl;
-		return 1;
+		return -1;
 	}
 
 	struct sockaddr_in server;
@@ -41,7 +41,7 @@ int main() {
 	if (bind(serverFD, (struct sockaddr*) &server, sizeof(server)) == -1) {
 		close(serverFD);
 		std::cerr << "Error binding server socket to 9092." << std::endl;
-		return 1;
+		return -1;
 	}
 
 	socklen_t serverLength = sizeof(server);
@@ -59,7 +59,7 @@ int main() {
 	if (listen(serverFD, maxConnectionRequests) == -1) {
 		close(serverFD);
 		std::cerr << "Error listening for connections." << std::endl;
-		return 1;	
+		return -1;	
 	}
 
 	while (true) {
@@ -69,7 +69,7 @@ int main() {
 		if (clientFD == -1) {
 			close(serverFD);
 			std::cerr << "Error connecting client with server." << std::endl;
-			return 1;
+			return -1;
 		}
 
 		std::cout << "Client connected\n";
