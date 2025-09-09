@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
 	int16_t requestAPIKey = 18;
 	appendValue(requestAPIKey, header);
 
-	int16_t requestAPIVersion = 5;
+	int16_t requestAPIVersion = 4;
 	appendValue(requestAPIVersion, header);
 	
 	int32_t correlationId = 7;
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
 	//send(clientFD, &totalMessageSize, sizeof(totalMessageSize), 0);
 	send(clientFD, header.data(), header.size(), 0);
 	std::unordered_map<int32_t, int16_t> correlationToAPIKey;
-	correlationToAPIKey[ntohl(correlationId)] = ntohs(requestAPIKey);
+	correlationToAPIKey[correlationId] = requestAPIKey;
 	std::vector<char> responseBuffer = Response::readResponse(clientFD);
 
 	Response response(responseBuffer);
