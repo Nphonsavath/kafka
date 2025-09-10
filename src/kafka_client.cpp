@@ -10,6 +10,7 @@
 #include <cstring>
 #include <unordered_map>
 #include <thread>
+#include <chrono>
 
 #include "kafka_protocol.hpp"
 #include "request.hpp"
@@ -99,6 +100,7 @@ std::vector<char> buildRequest(kafkaRequestHeaderV2& header, IRequestBody& body)
 void sendRequestPerConnection(std::string serverIP, int serverPort, std::vector<char> request, 
 		std::unordered_map<int32_t, int16_t>& correlationToAPIKey,
 		std::mutex& mapMutex) {
+	auto start = std::chrono::steady_clock::now();
 	int clientFD = createSocket();
 	if (clientFD == -1) { return; }
 
@@ -107,7 +109,8 @@ void sendRequestPerConnection(std::string serverIP, int serverPort, std::vector<
 		return;
 	}
 
-	send(clientFD, request.data(), request.size(), 0);	
+	send(clientFD, request.data(), request.size(), 0);
+	std::this_thread::sleep_for(std::chrono::milliseconds(5000));	
 	std::vector<char> responseBuffer = Response::readResponse(clientFD);
 
 	Response response(responseBuffer);
@@ -121,6 +124,9 @@ void sendRequestPerConnection(std::string serverIP, int serverPort, std::vector<
 
 	response.parseResponse(responseBuffer, responseAPIKey);	
 	response.toString();
+	auto end = std::chrono::steady_clock::now();
+	std::chrono::duration<double> elapsed = end - start;
+	std::cout << "Elapsed Time: " << elapsed.count() << "seconds" << std::endl;
 	close(clientFD);
 }
 
