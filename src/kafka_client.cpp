@@ -96,14 +96,25 @@ std::vector<char> buildRequest(kafkaRequestHeaderV2& header, IRequestBody& body)
 	return buffer;
 }
 
-void sendRequest(int clientFD, std::vector<char>& request, std::unordered_map<int32_t, int16_t> correlationToAPIKey) {
-	send(clientFD, request.data(), request.size(), 0);
+void sendRequestPerConnection(int clientFD, std::vector<char> request, 
+		std::unordered_map<int32_t, int16_t>& correlationToAPIKey,
+		std::mutex& mapMutex, std::mutex& socketMutex) {
+	std::vector<char> responseBuffer;
+	{
+		std::lock_guard<std::mutex> lock(socketMutex);
+		send(clientFD, request.data(), request.size(), 0);	
+		responseBuffer = Response::readResponse(clientFD);
+	}
 
-	std::vector<char> responseBuffer = Response::readResponse(clientFD);
 	Response response(responseBuffer);
 	std::cout << "Response correlation Id: " << response.getCorrelationId() << std::endl;
 
-	int16_t responseAPIKey = correlationToAPIKey[response.getCorrelationId()];
+	int16_t responseAPIKey;
+	{
+		std::lock_guard<std::mutex> lock(mapMutex);
+		responseAPIKey = correlationToAPIKey[response.getCorrelationId()];
+	}
+
 	response.parseResponse(responseBuffer, responseAPIKey);	
 
 	response.toString();
@@ -116,24 +127,30 @@ int main(int argc, char* argv[]) {
 		return -1; 
 	}
 
-	int clientFD = createSocket();
-	if (clientFD == -1) { return -1; }	
-
-	if (!connectSocket(clientFD, serverIP, serverPort)) { 
-		close(clientFD);
-		return -1; 
-	}
-
+	
+	std::unordered_map<int32_t, int16_t> correlationToAPIKey;
 	std::vector<std::thread> threads;	
 
-	kafkaRequestHeaderV2 requestHeader = makeHeader(18, 0, 7, "kafka-cli", 0);
-       	APIVersionRequestBodyV4 body = makeAPIVersionBody("kafka-cli", "0.1", 0);	
-	std::vector<char> header = buildRequest(requestHeader, body);
+	std::mutex mapMutex;
+	std::mutex socketMutex;
+	
+	for (int i = 0; i < 3; i++) {
+		kafkaRequestHeaderV2 requestHeader = makeHeader(18, 0+i, 7+i, "kafka-cli", 0);
+       		APIVersionRequestBodyV4 body = makeAPIVersionBody("kafka-cli", "0.1", 0);	
+		std::vector<char> header = buildRequest(requestHeader, body);
 
-	std::unordered_map<int32_t, int16_t> correlationToAPIKey;
-	correlationToAPIKey[requestHeader.correlationId] = requestHeader.requestAPIKey;
+		{
+			std::lock_guard<std::mutex> lock(mapMutex);
+			correlationToAPIKey[requestHeader.correlationId] = requestHeader.requestAPIKey;
+		}
+		//sendRequest(clientFD, header, correlationToAPIKey);	
+		threads.emplace_back(sendRequest, clientFD, header, std::ref(correlationToAPIKey),
+				std::ref(mapMutex), std::ref(socketMutex));
+	}
 
-	sendRequest(clientFD, header, correlationToAPIKey);	
+	for (auto& t : threads) {
+		t.join();
+	}
 	
 	close(clientFD);
 	return 0;
