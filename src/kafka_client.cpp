@@ -96,15 +96,19 @@ std::vector<char> buildRequest(kafkaRequestHeaderV2& header, IRequestBody& body)
 	return buffer;
 }
 
-void sendRequestPerConnection(int clientFD, std::vector<char> request, 
+void sendRequestPerConnection(std::string serverIP, int serverPort, std::vector<char> request, 
 		std::unordered_map<int32_t, int16_t>& correlationToAPIKey,
-		std::mutex& mapMutex, std::mutex& socketMutex) {
-	std::vector<char> responseBuffer;
-	{
-		std::lock_guard<std::mutex> lock(socketMutex);
-		send(clientFD, request.data(), request.size(), 0);	
-		responseBuffer = Response::readResponse(clientFD);
+		std::mutex& mapMutex) {
+	int clientFD = createSocket();
+	if (clientFD == -1) { return; }
+
+	if (!connectSocket(clientFD, serverIP, serverPort)) {
+		close(clientFD);
+		return;
 	}
+
+	send(clientFD, request.data(), request.size(), 0);	
+	std::vector<char> responseBuffer = Response::readResponse(clientFD);
 
 	Response response(responseBuffer);
 	std::cout << "Response correlation Id: " << response.getCorrelationId() << std::endl;
@@ -116,8 +120,8 @@ void sendRequestPerConnection(int clientFD, std::vector<char> request,
 	}
 
 	response.parseResponse(responseBuffer, responseAPIKey);	
-
 	response.toString();
+	close(clientFD);
 }
 
 int main(int argc, char* argv[]) {
@@ -126,13 +130,11 @@ int main(int argc, char* argv[]) {
 	if (parseArgs(argc, argv, serverIP, serverPort) == -1) { 
 		return -1; 
 	}
-
 	
 	std::unordered_map<int32_t, int16_t> correlationToAPIKey;
 	std::vector<std::thread> threads;	
 
 	std::mutex mapMutex;
-	std::mutex socketMutex;
 	
 	for (int i = 0; i < 3; i++) {
 		kafkaRequestHeaderV2 requestHeader = makeHeader(18, 0+i, 7+i, "kafka-cli", 0);
@@ -144,15 +146,14 @@ int main(int argc, char* argv[]) {
 			correlationToAPIKey[requestHeader.correlationId] = requestHeader.requestAPIKey;
 		}
 		//sendRequest(clientFD, header, correlationToAPIKey);	
-		threads.emplace_back(sendRequest, clientFD, header, std::ref(correlationToAPIKey),
-				std::ref(mapMutex), std::ref(socketMutex));
+		threads.emplace_back(sendRequestPerConnection, serverIP, serverPort, header, std::ref(correlationToAPIKey),
+				std::ref(mapMutex));
 	}
 
 	for (auto& t : threads) {
 		t.join();
 	}
 	
-	close(clientFD);
 	return 0;
 
 }
