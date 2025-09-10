@@ -68,10 +68,10 @@ struct APIVersionRequestBodyV4 : public IRequestBody {
 	std::string clientIdSoftwareVerCompact;
 	int8_t tagBuffer;
 
-APIVersionRequestBodyV4 (std::string clientId, std::string clientIdSoftwareVer, int8_t tag) 
-	: clientIdCompact(std::move(clientId)), 
-	clientIdSoftwareVerCompact(std::move(clientIdSoftwareVer)), 
-	tagBuffer(tag) {}
+	APIVersionRequestBodyV4 (std::string clientId, std::string clientIdSoftwareVer, int8_t tag) : 
+		clientIdCompact(std::move(clientId)), 
+		clientIdSoftwareVerCompact(std::move(clientIdSoftwareVer)), 
+		tagBuffer(tag) {}
 	void appendToBuffer(std::vector<char>& buffer) override {
 		int8_t clientIdLength = clientIdCompact.size();
 		kafka::appendValue(clientIdLength, buffer);
@@ -83,6 +83,26 @@ APIVersionRequestBodyV4 (std::string clientId, std::string clientIdSoftwareVer, 
 
 		kafka::appendValue(tagBuffer, buffer);
 	}
+};
+
+struct Topics {
+	int8_t topicNameLength;
+	std::string topicName;
+	int8_t tagBuffer;
+};
+
+struct DescribeTopicPartitionsRequestBodyV0 : IRequestBody {
+	std::vector<Topics> topics;
+	int32_t responseParitionLimit;
+	int8_t cursor;
+	int8_t tagBuffer;	
+
+	DescribeTopicPartitionsRequestBodyV0 (std::vector<Topics> topics,
+			int32_t partitionLimit,
+			int8_t cursor,
+			int8_t tagBuffer) : 
+		topics(std::move(topics)),
+		responseParitionLimit(partitionLimit), cursor(cursor), tagBuffer(tagBuffer) {}
 };
 
 struct APIKeyVersion {

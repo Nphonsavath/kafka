@@ -65,7 +65,8 @@ int main() {
 		request.toString();
 
 		std::vector<APIKeyVersion> supportedAPIs = {
-			{18, 0, 4, 0}
+			{18, 0, 4, 0},
+			{75, 0, 0, 0}
 		};
 
 		std::vector<char> header;

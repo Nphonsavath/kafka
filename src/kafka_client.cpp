@@ -110,7 +110,7 @@ void sendRequestPerConnection(std::string serverIP, int serverPort, std::vector<
 	}
 
 	send(clientFD, request.data(), request.size(), 0);
-	std::this_thread::sleep_for(std::chrono::milliseconds(5000));	
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));	
 	std::vector<char> responseBuffer = Response::readResponse(clientFD);
 
 	Response response(responseBuffer);
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
 
 	std::mutex mapMutex;
 	
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 2; i++) {
 		kafkaRequestHeaderV2 requestHeader = makeHeader(18, 0+i, 7+i, "kafka-cli", 0);
        		APIVersionRequestBodyV4 body = makeAPIVersionBody("kafka-cli", "0.1", 0);	
 		std::vector<char> header = buildRequest(requestHeader, body);
