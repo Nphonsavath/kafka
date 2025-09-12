@@ -96,8 +96,8 @@ int main() {
 					std::cout << "api.tagBuffer: " << static_cast<int>(api.tagBuffer) << std::endl;
 				}
 
-				int32_t throttleTime = 0;
-				kafka::appendValue(throttleTime, header);	
+				int32_t throttleTimeMs = 0;
+				kafka::appendValue(throttleTimeMs, header);	
 
 				int8_t tagBuffer = 0;
 				header.push_back(static_cast<char>(tagBuffer));
@@ -105,6 +105,14 @@ int main() {
 				errorCode = UNSUPPORTED_VERSION;
 				kafka::appendValue(errorCode, header);
 			}
+		} else if (request.getRequestAPIKey() == 75) {
+			int32_t throttleTimeMs = 0;
+			kafka::appendValue(throttleTimeMs, header);
+			std::vector<topicResponse> topics = {{3, 4, "foo", {0}, false, 1, {}, 3576, 0}};
+			//for (int i = 0; i < topics.size(); i++) {
+				
+			//}	
+
 		}
 
 		int32_t totalMessageSize = htonl(header.size());

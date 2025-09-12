@@ -72,6 +72,11 @@ APIVersionRequestBodyV4 makeAPIVersionBody(std::string clientIdCompact, std::str
 	return {clientIdCompact, clientIdSoftwareVerCompact, tagBuffer};
 }
 
+DescribeTopicPartitionsRequestBodyV0 makeTopicPartitionBody(std::vector<topicRequest>& topics,
+		int32_t partitionLimit, int8_t cursor, int8_t tagBuffer) {
+	return {topics, partitionLimit, cursor, tagBuffer};
+}
+
 std::vector<char> buildRequest(kafkaRequestHeaderV2& header, IRequestBody& body) {
 	std::vector<char> buffer;
 	
@@ -141,10 +146,15 @@ int main(int argc, char* argv[]) {
 	std::vector<std::thread> threads;	
 
 	std::mutex mapMutex;
-	
-	for (int i = 0; i < 2; i++) {
+
+	std::string topicName = "foo";
+	topicRequest topicA = {static_cast<int8_t>(topicName.size()), topicName, 0};
+	std::vector<topicRequest> topics = {topicA};
+
+	for (int i = 0; i < 1; i++) {
 		kafkaRequestHeaderV2 requestHeader = makeHeader(18, 0+i, 7+i, "kafka-cli", 0);
-       		APIVersionRequestBodyV4 body = makeAPIVersionBody("kafka-cli", "0.1", 0);	
+       		//APIVersionRequestBodyV4 body = makeAPIVersionBody("kafka-cli", "0.1", 0);
+		DescribeTopicPartitionsRequestBodyV0 body = makeTopicPartitionBody(topics, 100, -1, 0);	
 		std::vector<char> header = buildRequest(requestHeader, body);
 
 		{

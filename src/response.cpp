@@ -73,10 +73,26 @@ void Response::parseAPIVersionsResponse(std::vector<char> bytes) {
 	responseData = body;
 }
 
+void Response::parseTopicPartitionResponse(std::vector<char> bytes) {
+	char* data = bytes.data();
+	int offset = 4;
+
+	DescribeTopicPartitionsResponseBodyV0 body;
+	body.throttleTimeMs = kafka::readBigEndian<int32_t>(data, offset);
+
+	int8_t topicsArrayLength = kafka::readBigEndian<int8_t>(data, offset) - 1;
+	for (int i = 0; i < topicsArrayLength; i++) {
+		topicResponse topic;
+
+	}
+}
+
 void Response::parseResponse(std::vector<char> bytes, int APIKey) {
 	std::cout << "APIKey: " << APIKey << std::endl;
 	if (APIKey == 18) {
 		Response::parseAPIVersionsResponse(bytes);
+	} else if (APIKey == 75) {
+		Response::parseTopicPartitionResponse(bytes);
 	}
 }
 
@@ -86,10 +102,6 @@ Response::Response(std::vector<char> bytes) {
 
 	responseHeader.correlationId = kafka::readBigEndian<int32_t>(data, offset);
 	
-	//std::variant<APIVersionsResponseBodyV4> responseDaa;
-
-	//responseHeader.errorCode = convertToBigEndian<std::int16_t>(data + offset);
-	//offset += sizeof(responseHeader.errorCode);
 }
 
 

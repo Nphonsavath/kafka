@@ -13,6 +13,7 @@ public:
 	static std::vector<char> readResponse(int clientFD);
 	void parseResponse(std::vector<char> bytes, int APIKey);
 	void parseAPIVersionsResponse(std::vector<char> bytes);
+	void parseTopicPartitionResponse(std::vector<char> bytes);
 	int32_t getCorrelationId() { return responseHeader.correlationId; }
 	void toString();
 
